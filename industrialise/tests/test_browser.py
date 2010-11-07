@@ -63,8 +63,9 @@ class TestBrowser(unittest.TestCase):
 
 class TestPosting(unittest.TestCase):
     def serve(self, q):
-        httpd = make_server('', 8000, simple_app_maker(q))
-        print "Serving HTTP on port 8000..."
+        httpd = make_server('', 0, simple_app_maker(q))
+        port = httpd.server_port
+        q.put(port)
         httpd.handle_request()
 
     def test_whatever(self):
@@ -76,7 +77,8 @@ class TestPosting(unittest.TestCase):
         q = Queue()
         p = Process(target=self.serve, args=(q,))
         p.start()
-        url = "http://localhost:8000/"
+        port = q.get()
+        url = "http://localhost:%s/" % port
         b._tree.make_links_absolute(url, resolve_base_href=True)
         b.submit(form)
         result = q.get()
