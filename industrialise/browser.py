@@ -1,9 +1,10 @@
 # -*- test-case-name: "industrialise.tests.test_browser" -*-
 
+import urllib
 import urllib2
 import cookielib
 
-from lxml.html import fromstring
+from lxml.html import fromstring, submit_form
 
 class Browser(object):
     """A pretend browser.  Holds state for a browsing session."""
@@ -34,3 +35,10 @@ class Browser(object):
 
     def find(self, path):
         return self._tree.xpath(path)
+
+    def open_http(self, method, url, values={}):
+        if method == "POST":
+            return self._opener.open(url, urllib.urlencode(values))
+
+    def submit(self, form):
+        submit_form(form, open_http=self.open_http)

@@ -1,5 +1,8 @@
 import unittest
 import os
+import cgi
+from wsgiref.simple_server import make_server
+from multiprocessing import Process, Queue
 
 from industrialise import browser
 
@@ -57,3 +60,42 @@ class TestBrowser(unittest.TestCase):
         b.back()
         self.assertEqual(b._cur_url, url1)
         self.assertEqual(b._history, [url1])
+
+class TestPosting(unittest.TestCase):
+    def serve(self, q):
+        httpd = make_server('', 8000, simple_app_maker(q))
+        print "Serving HTTP on port 8000..."
+        httpd.handle_request()
+
+    def test_whatever(self):
+        b = browser.Browser()
+        url = "file://%s/industrialise/tests/localform.html" % os.getcwd()
+        b.go(url)
+        form = b._tree.forms[0]
+        form.fields["username"] = "ROB"
+        q = Queue()
+        p = Process(target=self.serve, args=(q,))
+        p.start()
+        url = "http://localhost:8000/"
+        b._tree.make_links_absolute(url, resolve_base_href=True)
+        b.submit(form)
+        result = q.get()
+        print result
+        p.join()
+
+def simple_app_maker(queue):
+    def simple_app(environ, start_response):
+        post_env = environ.copy()
+        post_env['QUERY_STRING'] = ''
+        post = cgi.FieldStorage(
+        fp=environ['wsgi.input'],
+        environ=post_env,
+        keep_blank_values=True
+        )
+        queue.put('hi')
+        print post
+        status = '200 OK'
+        response_headers = [('Content-type','text/plain')]
+        start_response(status, response_headers)
+        return ['Hello world!\n']
+    return simple_app
