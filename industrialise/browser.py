@@ -17,7 +17,9 @@ class Browser(object):
         self._history = []
 
     def _load_data(self, url):
-        return self._opener.open(url).read()
+        response = self._opener.open(url)
+        self.response_code = response.getcode()
+        return response.read()
 
     def go(self, url):
         """Visit the provided url."""

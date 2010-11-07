@@ -86,6 +86,12 @@ class TestPosting(unittest.TestCase):
         result = self.q.get()
         print result
 
+    def test_check_code(self):
+        b = browser.Browser()
+        url = "http://localhost:%s/" % self.port
+        b.go(url)
+        self.assertEqual(b.response_code, 200)
+
     def tearDown(self):
         self.p.join()
 
