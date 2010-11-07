@@ -21,6 +21,9 @@ class Browser(object):
         self.response_code = response.getcode()
         return response.read()
 
+    def reload(self):
+        self._visit(self._cur_url)
+
     def go(self, url):
         """Visit the provided url."""
         self._visit(url)
