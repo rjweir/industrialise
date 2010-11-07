@@ -97,6 +97,15 @@ class TestPosting(unittest.TestCase):
     def tearDown(self):
         self.p.terminate()
 
+    def test_reload(self):
+        b = browser.Browser()
+        url = "http://localhost:%s/" % self.port
+        b.go(url)
+        t = b._tree
+        b.reload()
+        self.failUnless(t is not b._tree)
+        self.assertEqual(b.response_code, 200)
+
 def simple_app_maker(queue):
     def simple_app(environ, start_response):
         post_env = environ.copy()
