@@ -62,6 +62,8 @@ class TestBrowser(unittest.TestCase):
         self.assertEqual(b._history, [url1])
 
 class TestPosting(unittest.TestCase):
+    # FIXME: THIS IS TERROBLE
+
     def setUp(self):
         self.q = Queue()
         self.p = Process(target=self.serve, args=(self.q,))
@@ -72,7 +74,7 @@ class TestPosting(unittest.TestCase):
         httpd = make_server('', 0, simple_app_maker(q))
         port = httpd.server_port
         q.put(port)
-        httpd.handle_request()
+        httpd.serve_forever()
 
     def test_whatever(self):
         b = browser.Browser()
@@ -93,7 +95,7 @@ class TestPosting(unittest.TestCase):
         self.assertEqual(b.response_code, 200)
 
     def tearDown(self):
-        self.p.join()
+        self.p.terminate()
 
 def simple_app_maker(queue):
     def simple_app(environ, start_response):
