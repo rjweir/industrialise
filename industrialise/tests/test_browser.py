@@ -31,3 +31,29 @@ class TestBrowser(unittest.TestCase):
         b.go(url1)
         b.go(url2)
         self.assertEqual(b._history, [url1, url2])
+
+    def test_visit_once(self):
+        b = browser.Browser()
+        url = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
+        b._visit(url)
+        self.assertEqual(b._cur_url, url)
+        self.assertEqual(b._cur_page, open(url[6:]).read())
+
+    def test_visit_twice(self):
+        b = browser.Browser()
+        url1 = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
+        url2 = "file://%s/industrialise/tests/invalid_html5.html" % os.getcwd()
+        b.go(url1)
+        b.go(url2)
+        self.assertEqual(b._cur_url, url2)
+        self.assertEqual(b._cur_page, open(url2[6:]).read())
+
+    def test_step_in_previous_river(self):
+        b = browser.Browser()
+        url1 = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
+        url2 = "file://%s/industrialise/tests/invalid_html5.html" % os.getcwd()
+        b.go(url1)
+        b.go(url2)
+        b.back()
+        self.assertEqual(b._cur_url, url1)
+        self.assertEqual(b._history, [url1])
