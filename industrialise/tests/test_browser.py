@@ -61,6 +61,14 @@ class TestBrowser(unittest.TestCase):
         self.assertEqual(b._cur_url, url1)
         self.assertEqual(b._history, [url1])
 
+    def test_reload(self):
+        b = browser.Browser()
+        url = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
+        b.go(url)
+        t = b._tree
+        b.reload()
+        self.failUnless(t is not b._tree)
+
 class TestPosting(unittest.TestCase):
     # FIXME: THIS IS TERROBLE
 
