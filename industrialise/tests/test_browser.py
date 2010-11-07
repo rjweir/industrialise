@@ -69,6 +69,16 @@ class TestBrowser(unittest.TestCase):
         b.reload()
         self.failUnless(t is not b._tree)
 
+    def test_follow_link(self):
+        b = browser.Browser()
+        url = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
+        next_url = "file://%s/industrialise/tests/invalid_html5.html" % os.getcwd()
+        b.go(url)
+        t = b._tree
+        b.click("over there")
+        self.failUnless(t is not b._tree)
+        self.assertEqual(b._cur_url, next_url)
+
 class TestPosting(unittest.TestCase):
     # FIXME: THIS IS TERROBLE
 
