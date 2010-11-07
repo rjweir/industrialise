@@ -21,6 +21,10 @@ class TestBrowser(unittest.TestCase):
         b.go("file://%s/industrialise/tests/valid_html5.html" % os.getcwd())
         self.assertEqual(b.find('//h1')[0].text, "a title")
 
-class TestWithServer(unittest.TestCase):
-    def setUp(self):
-        
+    def test_history(self):
+        b = browser.Browser()
+        url1 = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
+        url2 = "file://%s/industrialise/tests/invalid_html5.html" % os.getcwd()
+        b.go(url1)
+        b.go(url2)
+        self.assertEqual(b._history, [url1, url2])
