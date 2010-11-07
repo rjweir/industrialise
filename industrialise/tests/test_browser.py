@@ -62,6 +62,12 @@ class TestBrowser(unittest.TestCase):
         self.assertEqual(b._history, [url1])
 
 class TestPosting(unittest.TestCase):
+    def setUp(self):
+        self.q = Queue()
+        self.p = Process(target=self.serve, args=(self.q,))
+        self.p.start()
+        self.port = self.q.get()
+
     def serve(self, q):
         httpd = make_server('', 0, simple_app_maker(q))
         port = httpd.server_port
@@ -74,16 +80,14 @@ class TestPosting(unittest.TestCase):
         b.go(url)
         form = b._tree.forms[0]
         form.fields["username"] = "ROB"
-        q = Queue()
-        p = Process(target=self.serve, args=(q,))
-        p.start()
-        port = q.get()
-        url = "http://localhost:%s/" % port
+        url = "http://localhost:%s/" % self.port
         b._tree.make_links_absolute(url, resolve_base_href=True)
-        b.submit(form)
-        result = q.get()
+        response = b.submit(form)
+        result = self.q.get()
         print result
-        p.join()
+
+    def tearDown(self):
+        self.p.join()
 
 def simple_app_maker(queue):
     def simple_app(environ, start_response):
