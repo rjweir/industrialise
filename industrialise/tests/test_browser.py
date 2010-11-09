@@ -75,7 +75,7 @@ class TestBrowser(unittest.TestCase):
         next_url = "file://%s/industrialise/tests/invalid_html5.html" % os.getcwd()
         b.go(url)
         t = b._tree
-        b.click("over there")
+        b.follow("over there")
         self.failUnless(t is not b._tree)
         self.assertEqual(b._cur_url, next_url)
 

@@ -38,7 +38,7 @@ class Browser(object):
         self._history.pop()
         self._visit(self._history[-1])
 
-    def click(self, content):
+    def follow(self, content):
         self._tree.make_links_absolute(self._cur_url, resolve_base_href=True)
         link, = self._tree.xpath('//a[text() = $content]', content=content)
         self.go(link.attrib['href'])
