@@ -80,50 +80,66 @@ class TestBrowser(unittest.TestCase):
         self.failUnless(t is not b._tree)
         self.assertEqual(b._cur_url, next_url)
 
-class TestPosting(unittest.TestCase):
-    # FIXME: THIS IS TERROBLE
 
-    def setUp(self):
-        self.q = Queue()
-        self.p = Process(target=self.serve, args=(self.q,))
-        self.p.start()
-        self.port = self.q.get()
+class TestWSGIInterception(unittest.TestCase):
+    def test_go(self):
+        b = browser.WSGIInterceptingBrowser(simple_app)
+        b.go('http://localhost:80/')
+        self.assertEqual(b._cur_page, 'WSGI intercept successful!\n')
 
-    def serve(self, q):
-        httpd = make_server('', 0, simple_app_maker(q))
-        port = httpd.server_port
-        q.put(port)
-        httpd.serve_forever()
 
-    def test_whatever(self):
-        b = browser.Browser()
+class WSGIPostableStub(object):
+    """A WSGI app that just stores what gets posted to it."""
+
+    def __init__(self):
+        self.post_data = None
+
+    def __call__(self, environ, start_response):
+        post_env = environ.copy()
+        post_env['QUERY_STRING'] = ''
+        self.post_data = cgi.FieldStorage(
+            fp=environ['wsgi.input'],
+            environ=post_env,
+            keep_blank_values=True
+            )
+        status = '200 OK'
+        response_headers = [('Content-type','text/plain')]
+        start_response(status, response_headers)
+        return ['Ack\n']
+
+
+class TestPosting2(unittest.TestCase):
+    def _getBrowser(self):
+        self._app = WSGIPostableStub()
+        return browser.WSGIInterceptingBrowser(self._app)
+
+    def test_simple_post(self):
+        username = "DAUSER"
+        b = self._getBrowser()
         url = "file://%s/industrialise/tests/localform.html" % os.getcwd()
         b.go(url)
         form = b._tree.forms[0]
-        form.fields["username"] = "ROB"
-        url = "http://localhost:%s/" % self.port
+        form.fields["username"] = username
+        url = "http://localhost/"
         b._tree.make_links_absolute(url, resolve_base_href=True)
         response = b.submit(form)
-        result = self.q.get()
-        print result
+        self.assertEqual(self._app.post_data['username'].value, username)
 
     def test_check_code(self):
-        b = browser.Browser()
-        url = "http://localhost:%s/" % self.port
+        b = self._getBrowser()
+        url = "http://localhost/"
         b.go(url)
         self.assertEqual(b.response_code, 200)
 
-    def tearDown(self):
-        self.p.terminate()
-
     def test_reload(self):
-        b = browser.Browser()
-        url = "http://localhost:%s/" % self.port
+        b = self._getBrowser()
+        url = "http://localhost/"
         b.go(url)
         t = b._tree
         b.reload()
         self.failUnless(t is not b._tree)
         self.assertEqual(b.response_code, 200)
+
 
 def simple_app_maker(queue):
     def simple_app(environ, start_response):
@@ -142,9 +158,3 @@ def simple_app_maker(queue):
         return ['Hello world!\n']
     return simple_app
 
-
-class TestWSGIInterception(unittest.TestCase):
-    def test_go(self):
-        b = browser.WSGIInterceptingBrowser(simple_app)
-        b.go('http://localhost:80/')
-        self.assertEqual(b._cur_page, 'WSGI intercept successful!\n')
