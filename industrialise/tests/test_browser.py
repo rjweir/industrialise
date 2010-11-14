@@ -8,6 +8,12 @@ from multiprocessing import Process, Queue
 from industrialise import browser
 
 class TestBrowser(unittest.TestCase):
+
+    def test_provide_cookiejar(self):
+        sigil = object()
+        b = browser.Browser(sigil)
+        self.failUnless(sigil is b._cookiejar)
+
     def test_instantiate(self):
         browser.Browser()
 

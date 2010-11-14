@@ -11,8 +11,10 @@ from wsgi_intercept.urllib2_intercept.wsgi_urllib2 import WSGI_HTTPHandler
 class Browser(object):
     """A pretend browser.  Holds state for a browsing session."""
 
-    def __init__(self):
-        self._cookiejar = cookielib.CookieJar()
+    def __init__(self, cookiejar=None):
+        if cookiejar is None:
+            cookiejar = cookielib.CookieJar()
+        self._cookiejar = cookiejar
         self._opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self._cookiejar))
         self._cur_url = None
         self._cur_page = None
