@@ -143,22 +143,3 @@ class TestPosting2(unittest.TestCase):
         b.reload()
         self.failUnless(t is not b._tree)
         self.assertEqual(b.response_code, 200)
-
-
-def simple_app_maker(queue):
-    def simple_app(environ, start_response):
-        post_env = environ.copy()
-        post_env['QUERY_STRING'] = ''
-        post = cgi.FieldStorage(
-        fp=environ['wsgi.input'],
-        environ=post_env,
-        keep_blank_values=True
-        )
-        queue.put('hi')
-        print post
-        status = '200 OK'
-        response_headers = [('Content-type','text/plain')]
-        start_response(status, response_headers)
-        return ['Hello world!\n']
-    return simple_app
-
