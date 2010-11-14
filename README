@@ -1,0 +1,4 @@
+Industrialise is a simple wrapper around lxml.html that provides a
+simple mock browser for automating web scraping/web testing.  It also
+provides a trivial browser that uses WSGI interception to directly
+prod a WSGI application without having to run a separate HTTP server.
