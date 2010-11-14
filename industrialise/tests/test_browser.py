@@ -20,7 +20,7 @@ class TestBrowser(unittest.TestCase):
         data = b._load_data("file://%s/industrialise/tests/valid_html5.html" % os.getcwd())
         self.assertEqual(data, open("industrialise/tests/valid_html5.html").read())
 
-    def test_go(self):
+    def test_going_sets_url_and_loads_page(self):
         b = browser.Browser()
         url = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
         b.go(url)
@@ -32,7 +32,12 @@ class TestBrowser(unittest.TestCase):
         b.go("file://%s/industrialise/tests/valid_html5.html" % os.getcwd())
         self.assertEqual(b.find('//h1')[0].text, "a title")
 
-    def test_history(self):
+    def test_finding_something_that_does_not_exist(self):
+        b = browser.Browser()
+        b.go("file://%s/industrialise/tests/valid_html5.html" % os.getcwd())
+        self.assertEqual(b.find('//h2'), [])
+
+    def test_history_gets_updated(self):
         b = browser.Browser()
         url1 = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
         url2 = "file://%s/industrialise/tests/invalid_html5.html" % os.getcwd()
@@ -47,7 +52,7 @@ class TestBrowser(unittest.TestCase):
         self.assertEqual(b._cur_url, url)
         self.assertEqual(b._cur_page, open(url[6:]).read())
 
-    def test_visit_twice(self):
+    def test_visiting_moves(self):
         b = browser.Browser()
         url1 = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
         url2 = "file://%s/industrialise/tests/invalid_html5.html" % os.getcwd()
@@ -83,6 +88,7 @@ class TestBrowser(unittest.TestCase):
         b.follow("over there")
         self.failUnless(t is not b._tree)
         self.assertEqual(b._cur_url, next_url)
+        self.assertEqual(open(next_url[6:]).read(), b._cur_page)
 
 
 class TestWSGIInterception(unittest.TestCase):
