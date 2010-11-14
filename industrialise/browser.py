@@ -5,6 +5,8 @@ import urllib2
 import cookielib
 
 from lxml.html import fromstring, submit_form
+import wsgi_intercept
+from wsgi_intercept.urllib2_intercept.wsgi_urllib2 import WSGI_HTTPHandler
 
 class Browser(object):
     """A pretend browser.  Holds state for a browsing session."""
@@ -52,3 +54,18 @@ class Browser(object):
 
     def submit(self, form):
         submit_form(form, open_http=self.open_http)
+
+
+class WSGIInterceptingBrowser(Browser):
+    """A Browser that uses wsgi-intercept to blah blah."""
+
+    def __init__(self, wsgi_app_creator):
+        """
+        @param wsgi_app_creator: zero-arg callable that returns a wsgi app
+        """
+        self._cookiejar = cookielib.CookieJar()
+        self._opener = urllib2.build_opener(WSGI_HTTPHandler(), urllib2.HTTPCookieProcessor(self._cookiejar))
+        wsgi_intercept.add_wsgi_intercept('localhost', 80, wsgi_app_creator)
+        self._cur_url = None
+        self._cur_page = None
+        self._history = []

@@ -2,6 +2,7 @@ import unittest
 import os
 import cgi
 from wsgiref.simple_server import make_server
+from wsgi_intercept.test_wsgi_app import simple_app
 from multiprocessing import Process, Queue
 
 from industrialise import browser
@@ -140,3 +141,10 @@ def simple_app_maker(queue):
         start_response(status, response_headers)
         return ['Hello world!\n']
     return simple_app
+
+
+class TestWSGIInterception(unittest.TestCase):
+    def test_go(self):
+        b = browser.WSGIInterceptingBrowser(lambda:simple_app)
+        b.go('http://localhost:80/')
+        self.assertEqual(b._cur_page, 'WSGI intercept successful!\n')
