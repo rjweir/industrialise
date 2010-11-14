@@ -112,7 +112,7 @@ class WSGIPostableStub(object):
         return ['Ack\n']
 
 
-class TestPosting2(unittest.TestCase):
+class TestPosting(unittest.TestCase):
     def _getBrowser(self):
         self._app = WSGIPostableStub()
         return browser.WSGIInterceptingBrowser(self._app)
@@ -128,18 +128,3 @@ class TestPosting2(unittest.TestCase):
         b._tree.make_links_absolute(url, resolve_base_href=True)
         response = b.submit(form)
         self.assertEqual(self._app.post_data['username'].value, username)
-
-    def test_check_code(self):
-        b = self._getBrowser()
-        url = "http://localhost/"
-        b.go(url)
-        self.assertEqual(b.response_code, 200)
-
-    def test_reload(self):
-        b = self._getBrowser()
-        url = "http://localhost/"
-        b.go(url)
-        t = b._tree
-        b.reload()
-        self.failUnless(t is not b._tree)
-        self.assertEqual(b.response_code, 200)
