@@ -10,5 +10,5 @@ setup(name='Industrialise',
       author='Rob Weir',
       author_email='rweir@ertius.org',
       url='http://ertius.org/code/industrialise/',
-      packages=['industrialise'],
+      packages=['industrialise', 'industrialise.tests'],
      )
