@@ -145,6 +145,6 @@ def simple_app_maker(queue):
 
 class TestWSGIInterception(unittest.TestCase):
     def test_go(self):
-        b = browser.WSGIInterceptingBrowser(lambda:simple_app)
+        b = browser.WSGIInterceptingBrowser(simple_app)
         b.go('http://localhost:80/')
         self.assertEqual(b._cur_page, 'WSGI intercept successful!\n')

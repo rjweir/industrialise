@@ -61,11 +61,11 @@ class WSGIInterceptingBrowser(Browser):
 
     def __init__(self, wsgi_app_creator):
         """
-        @param wsgi_app_creator: zero-arg callable that returns a wsgi app
+        @param wsgi_app_creator: wsgi app (ie two arg callable)
         """
         self._cookiejar = cookielib.CookieJar()
         self._opener = urllib2.build_opener(WSGI_HTTPHandler(), urllib2.HTTPCookieProcessor(self._cookiejar))
-        wsgi_intercept.add_wsgi_intercept('localhost', 80, wsgi_app_creator)
+        wsgi_intercept.add_wsgi_intercept('localhost', 80, lambda:wsgi_app_creator)
         self._cur_url = None
         self._cur_page = None
         self._history = []
