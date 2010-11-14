@@ -1,9 +1,7 @@
 import unittest
 import os
 import cgi
-from wsgiref.simple_server import make_server
 from wsgi_intercept.test_wsgi_app import simple_app
-from multiprocessing import Process, Queue
 
 from industrialise import browser
 
