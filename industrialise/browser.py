@@ -34,8 +34,7 @@ class Browser(object):
         self._history.append(url)
 
     def _visit(self, url):
-        self._cur_url = url
-        self._cur_page = self._load_data(url)
+        self._cur_page, self._cur_url = self._load_data(url)
         self._tree = fromstring(self._cur_page, base_url=url)
 
     def back(self):

@@ -138,9 +138,28 @@ class WSGIPostableStub(object):
         return ['Ack\n']
 
 
+class WSGIRedirectingStub(object):
+    """A WSGI app that just redirects."""
+
+    def __init__(self, path):
+        self.path = path
+
+    def __call__(self, environ, start_response):
+        if environ['PATH_INFO'] == self.path:
+            status = '200 OK'
+            response_headers = [('Content-type', 'text/plain')]
+            start_response(status, response_headers)
+            return ['Ack.']
+        else:
+            status = '301 Redirect'
+            response_headers = [('Location', self.path)]
+            start_response(status, response_headers)
+            return []
+
+
 class TestPosting(unittest.TestCase):
-    def _getBrowser(self):
-        self._app = WSGIPostableStub()
+    def _getBrowser(self, app=WSGIPostableStub, *args):
+        self._app = app(*args)
         return browser.WSGIInterceptingBrowser(self._app)
 
     def test_simple_post(self):
@@ -167,3 +186,11 @@ class TestPosting(unittest.TestCase):
         self.assertEqual(response.code, 200)
         self.assertEqual(self._app.post_data['username'].value, username)
         self.assertEqual(self._app.post_data['submit'].value, 'Yes!')
+
+
+    def test_redirect(self):
+        destination = "/destination"
+        url = "http://localhost/"
+        b = self._getBrowser(WSGIRedirectingStub, destination)
+        b.go(url)
+        self.assertEqual(url[:-1] + destination, b._cur_url)
