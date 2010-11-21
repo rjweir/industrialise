@@ -17,8 +17,10 @@ class TestBrowser(unittest.TestCase):
 
     def test_load_data(self):
         b = browser.Browser()
-        data = b._load_data("file://%s/industrialise/tests/valid_html5.html" % os.getcwd())
+        url = "file://%s/industrialise/tests/valid_html5.html"
+        data, final_url = b._load_data(url % os.getcwd())
         self.assertEqual(data, open("industrialise/tests/valid_html5.html").read())
+        self.assertEqual(final_url, url % os.getcwd())
 
     def test_going_sets_url_and_loads_page(self):
         b = browser.Browser()

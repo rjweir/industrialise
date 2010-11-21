@@ -23,7 +23,7 @@ class Browser(object):
     def _load_data(self, url):
         response = self._opener.open(url)
         self.response_code = response.getcode()
-        return response.read()
+        return response.read(), response.geturl()
 
     def reload(self):
         self._visit(self._cur_url)
