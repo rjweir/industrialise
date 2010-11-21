@@ -103,10 +103,16 @@ class WSGIPostableStub(object):
 
     def __init__(self):
         self.post_data = None
+        self.map = {
+            '/form': open(os.path.join(os.getcwd(), "industrialise/tests/localform.html")).read()
+            }
 
     def __call__(self, environ, start_response):
         post_env = environ.copy()
         post_env['QUERY_STRING'] = ''
+        path = post_env["PATH_INFO"]
+        if path in self.map:
+            return [self.map[path]]
         self.post_data = cgi.FieldStorage(
             fp=environ['wsgi.input'],
             environ=post_env,
@@ -134,3 +140,15 @@ class TestPosting(unittest.TestCase):
         b._tree.make_links_absolute(url, resolve_base_href=True)
         response = b.submit(form)
         self.assertEqual(self._app.post_data['username'].value, username)
+
+    def test_simple_post_with_extra_bits(self):
+        username = "DAUSER"
+        b = self._getBrowser()
+        url = "http://localhost/form"
+        b.go(url)
+        form = b._tree.forms[0]
+        form.fields["username"] = username
+        response = b.submit(form, extra_values={'submit': 'Yes!'})
+        self.assertEqual(response.code, 200)
+        self.assertEqual(self._app.post_data['username'].value, username)
+        self.assertEqual(self._app.post_data['submit'].value, 'Yes!')

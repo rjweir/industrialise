@@ -54,8 +54,8 @@ class Browser(object):
         if method == "POST":
             return self._opener.open(url, urllib.urlencode(values))
 
-    def submit(self, form):
-        submit_form(form, open_http=self.open_http)
+    def submit(self, form, **kwargs):
+        return submit_form(form, open_http=self.open_http, **kwargs)
 
 
 class WSGIInterceptingBrowser(Browser):
