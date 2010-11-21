@@ -27,6 +27,13 @@ class TestBrowser(unittest.TestCase):
         self.assertEqual(b._cur_url, url)
         self.assertEqual(b._cur_page, open(url[6:]).read())
 
+    def test_dupe_links(self):
+        b = browser.Browser()
+        url = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
+        b.go(url)
+        # FIXME pick a better exception
+        self.assertRaises(Exception, b.follow, "matchme")
+
     def test_finding_something_that_exists(self):
         b = browser.Browser()
         b.go("file://%s/industrialise/tests/valid_html5.html" % os.getcwd())
