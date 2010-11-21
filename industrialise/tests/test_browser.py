@@ -193,4 +193,5 @@ class TestPosting(unittest.TestCase):
         url = "http://localhost/"
         b = self._getBrowser(WSGIRedirectingStub, destination)
         b.go(url)
-        self.assertEqual(url[:-1] + destination, b._cur_url)
+        self.assertEqual(b._cur_url, "http://localhost/destination")
+        self.assertEqual(b._tree.base_url, "http://localhost/destination")
