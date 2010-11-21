@@ -45,11 +45,11 @@ class Browser(object):
     def follow(self, content):
         self._tree.make_links_absolute(self._cur_url, resolve_base_href=True)
         links = self._tree.xpath('//a[text() = $content]', content=content)
-        try:
-            link, = links
-        except ValueError:
-            raise Exception("More than one matching link found!")
-        self.go(link.attrib['href'])
+        if len(links) < 1:
+            raise ValueError("Link matching that text not found.")
+        elif len(links) > 1:
+            raise ValueError("More than one matching link found.")
+        self.go(links[0].attrib['href'])
 
     def find(self, path):
         return self._tree.xpath(path)
