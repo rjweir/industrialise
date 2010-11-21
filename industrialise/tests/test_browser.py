@@ -140,6 +140,7 @@ class TestPosting(unittest.TestCase):
         b._tree.make_links_absolute(url, resolve_base_href=True)
         response = b.submit(form)
         self.assertEqual(self._app.post_data['username'].value, username)
+        self.assertEqual(response.code, 200)
 
     def test_simple_post_with_extra_bits(self):
         username = "DAUSER"
