@@ -16,7 +16,7 @@ class Browser(object):
             cookiejar = cookielib.CookieJar()
         self._cookiejar = cookiejar
         self._opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self._cookiejar))
-        self._cur_url = None
+        self.url = None
         self._cur_page = None
         self._history = []
 
@@ -26,7 +26,7 @@ class Browser(object):
         return response.read(), response.geturl()
 
     def reload(self):
-        self._visit(self._cur_url)
+        self._visit(self.url)
 
     def go(self, url):
         """Visit the provided url."""
@@ -34,15 +34,15 @@ class Browser(object):
         self._history.append(url)
 
     def _visit(self, url):
-        self._cur_page, self._cur_url = self._load_data(url)
-        self._tree = fromstring(self._cur_page, base_url=self._cur_url)
+        self._cur_page, self.url = self._load_data(url)
+        self._tree = fromstring(self._cur_page, base_url=self.url)
 
     def back(self):
         self._history.pop()
         self._visit(self._history[-1])
 
     def follow(self, content):
-        self._tree.make_links_absolute(self._cur_url, resolve_base_href=True)
+        self._tree.make_links_absolute(self.url, resolve_base_href=True)
         links = self._tree.xpath('//a[text() = $content]', content=content)
         if len(links) < 1:
             raise ValueError("Link matching that text not found.")
@@ -71,6 +71,6 @@ class WSGIInterceptingBrowser(Browser):
         self._cookiejar = cookielib.CookieJar()
         self._opener = urllib2.build_opener(WSGI_HTTPHandler(), urllib2.HTTPCookieProcessor(self._cookiejar))
         wsgi_intercept.add_wsgi_intercept('localhost', 80, lambda:wsgi_app_creator)
-        self._cur_url = None
+        self.url = None
         self._cur_page = None
         self._history = []

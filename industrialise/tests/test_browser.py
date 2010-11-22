@@ -26,7 +26,7 @@ class TestBrowser(unittest.TestCase):
         b = browser.Browser()
         url = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
         b.go(url)
-        self.assertEqual(b._cur_url, url)
+        self.assertEqual(b.url, url)
         self.assertEqual(b._cur_page, open(url[6:]).read())
 
     def test_dupe_links(self):
@@ -63,7 +63,7 @@ class TestBrowser(unittest.TestCase):
         b = browser.Browser()
         url = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
         b._visit(url)
-        self.assertEqual(b._cur_url, url)
+        self.assertEqual(b.url, url)
         self.assertEqual(b._cur_page, open(url[6:]).read())
 
     def test_visiting_moves(self):
@@ -72,7 +72,7 @@ class TestBrowser(unittest.TestCase):
         url2 = "file://%s/industrialise/tests/invalid_html5.html" % os.getcwd()
         b.go(url1)
         b.go(url2)
-        self.assertEqual(b._cur_url, url2)
+        self.assertEqual(b.url, url2)
         self.assertEqual(b._cur_page, open(url2[6:]).read())
 
     def test_step_in_previous_river(self):
@@ -82,7 +82,7 @@ class TestBrowser(unittest.TestCase):
         b.go(url1)
         b.go(url2)
         b.back()
-        self.assertEqual(b._cur_url, url1)
+        self.assertEqual(b.url, url1)
         self.assertEqual(b._history, [url1])
 
     def test_reload(self):
@@ -101,7 +101,7 @@ class TestBrowser(unittest.TestCase):
         t = b._tree
         b.follow("over there")
         self.failUnless(t is not b._tree)
-        self.assertEqual(b._cur_url, next_url)
+        self.assertEqual(b.url, next_url)
         self.assertEqual(open(next_url[6:]).read(), b._cur_page)
 
 
@@ -193,5 +193,5 @@ class TestPosting(unittest.TestCase):
         url = "http://localhost/"
         b = self._getBrowser(WSGIRedirectingStub, destination)
         b.go(url)
-        self.assertEqual(b._cur_url, "http://localhost/destination")
+        self.assertEqual(b.url, "http://localhost/destination")
         self.assertEqual(b._tree.base_url, "http://localhost/destination")
