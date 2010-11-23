@@ -1,4 +1,5 @@
 import unittest
+import urllib
 import os
 import cgi
 from wsgi_intercept.test_wsgi_app import simple_app
@@ -17,15 +18,29 @@ class TestBrowser(unittest.TestCase):
 
     def test_load_data(self):
         b = browser.Browser()
-        data = b._load_data("file://%s/industrialise/tests/valid_html5.html" % os.getcwd())
+        url = "file://%s/industrialise/tests/valid_html5.html"
+        data, final_url = b._load_data(url % os.getcwd())
         self.assertEqual(data, open("industrialise/tests/valid_html5.html").read())
+        self.assertEqual(final_url, url % os.getcwd())
 
     def test_going_sets_url_and_loads_page(self):
         b = browser.Browser()
         url = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
         b.go(url)
-        self.assertEqual(b._cur_url, url)
-        self.assertEqual(b._cur_page, open(url[6:]).read())
+        self.assertEqual(b.url, url)
+        self.assertEqual(b.contents, open(url[6:]).read())
+
+    def test_dupe_links(self):
+        b = browser.Browser()
+        url = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
+        b.go(url)
+        self.assertRaises(ValueError, b.follow, "matchme")
+
+    def test_nonexistent_links(self):
+        b = browser.Browser()
+        url = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
+        b.go(url)
+        self.assertRaises(ValueError, b.follow, "dontmatchme")
 
     def test_finding_something_that_exists(self):
         b = browser.Browser()
@@ -37,20 +52,20 @@ class TestBrowser(unittest.TestCase):
         b.go("file://%s/industrialise/tests/valid_html5.html" % os.getcwd())
         self.assertEqual(b.find('//h2'), [])
 
-    def test_history_gets_updated(self):
+    def testhistory_gets_updated(self):
         b = browser.Browser()
         url1 = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
         url2 = "file://%s/industrialise/tests/invalid_html5.html" % os.getcwd()
         b.go(url1)
         b.go(url2)
-        self.assertEqual(b._history, [url1, url2])
+        self.assertEqual(b.history, [url1, url2])
 
     def test_visit_once(self):
         b = browser.Browser()
         url = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
         b._visit(url)
-        self.assertEqual(b._cur_url, url)
-        self.assertEqual(b._cur_page, open(url[6:]).read())
+        self.assertEqual(b.url, url)
+        self.assertEqual(b.contents, open(url[6:]).read())
 
     def test_visiting_moves(self):
         b = browser.Browser()
@@ -58,8 +73,8 @@ class TestBrowser(unittest.TestCase):
         url2 = "file://%s/industrialise/tests/invalid_html5.html" % os.getcwd()
         b.go(url1)
         b.go(url2)
-        self.assertEqual(b._cur_url, url2)
-        self.assertEqual(b._cur_page, open(url2[6:]).read())
+        self.assertEqual(b.url, url2)
+        self.assertEqual(b.contents, open(url2[6:]).read())
 
     def test_step_in_previous_river(self):
         b = browser.Browser()
@@ -68,8 +83,8 @@ class TestBrowser(unittest.TestCase):
         b.go(url1)
         b.go(url2)
         b.back()
-        self.assertEqual(b._cur_url, url1)
-        self.assertEqual(b._history, [url1])
+        self.assertEqual(b.url, url1)
+        self.assertEqual(b.history, [url1])
 
     def test_reload(self):
         b = browser.Browser()
@@ -87,15 +102,21 @@ class TestBrowser(unittest.TestCase):
         t = b._tree
         b.follow("over there")
         self.failUnless(t is not b._tree)
-        self.assertEqual(b._cur_url, next_url)
-        self.assertEqual(open(next_url[6:]).read(), b._cur_page)
+        self.assertEqual(b.url, next_url)
+        self.assertEqual(open(next_url[6:]).read(), b.contents)
+
+    def test_tweak_user_agent(self):
+        b = browser.Browser()
+        u_a = dict(b._opener.addheaders)['User-agent']
+        self.failUnless('Python-urllib' in u_a)
+        self.failUnless('Industrialise' in u_a)
 
 
 class TestWSGIInterception(unittest.TestCase):
     def test_go(self):
         b = browser.WSGIInterceptingBrowser(simple_app)
         b.go('http://localhost:80/')
-        self.assertEqual(b._cur_page, 'WSGI intercept successful!\n')
+        self.assertEqual(b.contents, 'WSGI intercept successful!\n')
 
 
 class WSGIPostableStub(object):
@@ -103,10 +124,16 @@ class WSGIPostableStub(object):
 
     def __init__(self):
         self.post_data = None
+        self.map = {
+            '/form': open(os.path.join(os.getcwd(), "industrialise/tests/localform.html")).read()
+            }
 
     def __call__(self, environ, start_response):
         post_env = environ.copy()
         post_env['QUERY_STRING'] = ''
+        path = post_env["PATH_INFO"]
+        if path in self.map:
+            return [self.map[path]]
         self.post_data = cgi.FieldStorage(
             fp=environ['wsgi.input'],
             environ=post_env,
@@ -118,9 +145,61 @@ class WSGIPostableStub(object):
         return ['Ack\n']
 
 
+class DumbWSGIResponder(object):
+    """A WSGI app that just returns the provided status, headers and body."""
+
+    def __init__(self, status="200 OK", headers=None, body="Ack."):
+        self.status = status
+        if headers is None:
+            headers = [('Content-type','text/plain')]
+        self.headers = headers
+        self.body = body
+
+    def __call__(self, environ, start_response):
+        start_response(self.status, self.headers)
+        return [self.body]
+
+
+class WSGIHeaderCapturer(object):
+    """A WSGI app that just stores the request headers."""
+
+    def __call__(self, environ, start_response):
+        self.headers = environ.copy()
+        start_response("200 OK", [('Content-Type', 'text/plain')])
+        return ["Ack."]
+
+
+class WSGIStaticServer(object):
+    """A WSGI app that just serves a static file."""
+
+    def __call__(self, environ, start_response):
+        body = open(os.path.join(os.getcwd(), "industrialise/tests/localform.html")).read()
+        start_response("200 OK", [('Content-Type', 'text/plain')])
+        return [body]
+
+
+class WSGIRedirectingStub(object):
+    """A WSGI app that just redirects."""
+
+    def __init__(self, path):
+        self.path = path
+
+    def __call__(self, environ, start_response):
+        if environ['PATH_INFO'] == self.path:
+            status = '200 OK'
+            response_headers = [('Content-type', 'text/plain')]
+            start_response(status, response_headers)
+            return ['Ack.']
+        else:
+            status = '301 Redirect'
+            response_headers = [('Location', self.path)]
+            start_response(status, response_headers)
+            return []
+
+
 class TestPosting(unittest.TestCase):
-    def _getBrowser(self):
-        self._app = WSGIPostableStub()
+    def _getBrowser(self, app=WSGIPostableStub, *args, **kwargs):
+        self._app = app(*args, **kwargs)
         return browser.WSGIInterceptingBrowser(self._app)
 
     def test_simple_post(self):
@@ -134,3 +213,64 @@ class TestPosting(unittest.TestCase):
         b._tree.make_links_absolute(url, resolve_base_href=True)
         response = b.submit(form)
         self.assertEqual(self._app.post_data['username'].value, username)
+        self.assertEqual(response.code, 200)
+
+    def test_simple_post_with_extra_bits(self):
+        username = "DAUSER"
+        b = self._getBrowser()
+        url = "http://localhost/form"
+        b.go(url)
+        form = b._tree.forms[0]
+        form.fields["username"] = username
+        response = b.submit(form, extra_values={'submit': 'Yes!'})
+        self.assertEqual(response.code, 200)
+        self.assertEqual(self._app.post_data['username'].value, username)
+        self.assertEqual(self._app.post_data['submit'].value, 'Yes!')
+
+    def test_super_simple_scrape(self):
+        b = self._getBrowser(WSGIStaticServer)
+        url = "http://localhost/"
+        b.go(url)
+        self.assertEqual(b.find("//head/title")[0].text, "Some HTML5")
+
+    def test_redirect(self):
+        destination = "/destination"
+        url = "http://localhost/"
+        b = self._getBrowser(WSGIRedirectingStub, destination)
+        b.go(url)
+        self.assertEqual(b.url, "http://localhost/destination")
+        self.assertEqual(b._tree.base_url, "http://localhost/destination")
+
+    def test_set_code_200(self):
+        b = self._getBrowser(DumbWSGIResponder, status="200 OK", body="Ack.")
+        url = "http://localhost/form"
+        b.go(url)
+        self.assertEqual(b.code, 200)
+        self.assertEqual(b.contents, "Ack.")
+
+    def test_set_code_404(self):
+        b = self._getBrowser(DumbWSGIResponder, "404")
+        url = "http://localhost/form"
+        b.go(url)
+        self.assertEqual(b.code, 404)
+
+    def test_set_ua(self):
+        b = self._getBrowser(WSGIHeaderCapturer)
+        url = "http://localhost/"
+        b.go(url)
+        u_a = self._app.headers['HTTP_USER_AGENT']
+        self.failUnless('Industrialise' in u_a)
+
+    def test_GET_form(self):
+        username = "DAUSER"
+        b = self._getBrowser(WSGIHeaderCapturer)
+        url = "file://%s/industrialise/tests/localform.html" % os.getcwd()
+        b.go(url)
+        url = "http://localhost/"
+        b._tree.make_links_absolute(url, resolve_base_href=True)
+        form = b._tree.forms[1]
+        form.fields["username"] = username
+        url = "http://localhost/"
+        b.submit(form)
+        self.assertEqual(self._app.headers['QUERY_STRING'],
+                         urllib.urlencode([("username", "DAUSER")]))
