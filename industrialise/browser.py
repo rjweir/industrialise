@@ -8,6 +8,8 @@ from lxml.html import fromstring, submit_form
 import wsgi_intercept
 from wsgi_intercept.urllib2_intercept.wsgi_urllib2 import WSGI_HTTPHandler
 
+from industrialise._version import VERSION
+
 class Browser(object):
     """A pretend browser.  Holds state for a browsing session."""
 
@@ -16,9 +18,16 @@ class Browser(object):
             cookiejar = cookielib.CookieJar()
         self._cookiejar = cookiejar
         self._opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self._cookiejar))
+        self._tweak_user_agent(self._opener)
         self.url = None
         self.contents = None
         self.history = []
+
+    def _tweak_user_agent(self, opener):
+        headers = dict(opener.addheaders)
+        headers['User-agent'] = "%s; (Industrialise %s)" % (headers['User-agent'],
+                                                           VERSION)
+        opener.addheaders = headers.items()
 
     def _load_data(self, url):
         response = self._opener.open(url)
@@ -76,6 +85,7 @@ class WSGIInterceptingBrowser(Browser):
         self._cookiejar = cookielib.CookieJar()
         self._opener = urllib2.build_opener(WSGI_HTTPHandler(), urllib2.HTTPCookieProcessor(self._cookiejar))
         wsgi_intercept.add_wsgi_intercept('localhost', 80, lambda:wsgi_app_creator)
+        self._tweak_user_agent(self._opener)
         self.url = None
         self.contents = None
         self.history = []

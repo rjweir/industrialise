@@ -104,6 +104,12 @@ class TestBrowser(unittest.TestCase):
         self.assertEqual(b.url, next_url)
         self.assertEqual(open(next_url[6:]).read(), b.contents)
 
+    def test_tweak_user_agent(self):
+        b = browser.Browser()
+        u_a = dict(b._opener.addheaders)['User-agent']
+        self.failUnless('Python-urllib' in u_a)
+        self.failUnless('Industrialise' in u_a)
+
 
 class TestWSGIInterception(unittest.TestCase):
     def test_go(self):
@@ -151,6 +157,16 @@ class DumbWSGIResponder(object):
     def __call__(self, environ, start_response):
         start_response(self.status, self.headers)
         return [self.body]
+
+
+class WSGIHeaderCapturer(object):
+    """A WSGI app that just stores the request headers."""
+
+    def __call__(self, environ, start_response):
+        self.headers = environ.copy()
+        start_response("200 OK", [('Content-Type', 'text/plain')])
+        return ["Ack."]
+
 
 class WSGIRedirectingStub(object):
     """A WSGI app that just redirects."""
@@ -221,3 +237,10 @@ class TestPosting(unittest.TestCase):
         url = "http://localhost/form"
         b.go(url)
         self.assertEqual(b.code, 404)
+
+    def test_set_ua(self):
+        b = self._getBrowser(WSGIHeaderCapturer)
+        url = "http://localhost/"
+        b.go(url)
+        u_a = self._app.headers['HTTP_USER_AGENT']
+        self.failUnless('Industrialise' in u_a)
