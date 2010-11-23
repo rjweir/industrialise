@@ -1,4 +1,5 @@
 import unittest
+import urllib
 import os
 import cgi
 from wsgi_intercept.test_wsgi_app import simple_app
@@ -259,3 +260,17 @@ class TestPosting(unittest.TestCase):
         b.go(url)
         u_a = self._app.headers['HTTP_USER_AGENT']
         self.failUnless('Industrialise' in u_a)
+
+    def test_GET_form(self):
+        username = "DAUSER"
+        b = self._getBrowser(WSGIHeaderCapturer)
+        url = "file://%s/industrialise/tests/localform.html" % os.getcwd()
+        b.go(url)
+        url = "http://localhost/"
+        b._tree.make_links_absolute(url, resolve_base_href=True)
+        form = b._tree.forms[1]
+        form.fields["username"] = username
+        url = "http://localhost/"
+        b.submit(form)
+        self.assertEqual(self._app.headers['QUERY_STRING'],
+                         urllib.urlencode([("username", "DAUSER")]))

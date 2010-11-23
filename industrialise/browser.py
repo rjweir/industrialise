@@ -2,6 +2,7 @@
 
 import urllib
 import urllib2
+import urlparse
 import cookielib
 
 from lxml.html import fromstring, submit_form
@@ -70,10 +71,17 @@ class Browser(object):
     def _open_http(self, method, url, values={}):
         if method == "POST":
             return self._opener.open(url, urllib.urlencode(values))
+        else:
+            return self._opener.open(url_with_query(url, values))
 
     def submit(self, form, **kwargs):
         return submit_form(form, open_http=self._open_http, **kwargs)
 
+
+def url_with_query(url, values):
+     parts = urlparse.urlparse(url)
+     rest, (query, frag) = parts[:-2], parts[-2:]
+     return urlparse.urlunparse(rest + (urllib.urlencode(values), None))
 
 class WSGIInterceptingBrowser(Browser):
     """A Browser that uses wsgi-intercept to blah blah."""
