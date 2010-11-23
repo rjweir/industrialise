@@ -137,6 +137,19 @@ class WSGIPostableStub(object):
         start_response(status, response_headers)
         return ['Ack\n']
 
+class DumbWSGIResponder(object):
+    """A WSGI app that just returns the provided status, headers and body."""
+
+    def __init__(self, status="200 OK", headers=None, body="Ack."):
+        self.status = status
+        if headers is None:
+            headers = [('Content-type','text/plain')]
+        self.headers = headers
+        self.body = body
+
+    def __call__(self, environ, start_response):
+        start_response(self.status, self.headers)
+        return [self.body]
 
 class WSGIRedirectingStub(object):
     """A WSGI app that just redirects."""
@@ -158,8 +171,8 @@ class WSGIRedirectingStub(object):
 
 
 class TestPosting(unittest.TestCase):
-    def _getBrowser(self, app=WSGIPostableStub, *args):
-        self._app = app(*args)
+    def _getBrowser(self, app=WSGIPostableStub, *args, **kwargs):
+        self._app = app(*args, **kwargs)
         return browser.WSGIInterceptingBrowser(self._app)
 
     def test_simple_post(self):
@@ -195,3 +208,16 @@ class TestPosting(unittest.TestCase):
         b.go(url)
         self.assertEqual(b.url, "http://localhost/destination")
         self.assertEqual(b._tree.base_url, "http://localhost/destination")
+
+    def test_set_code_200(self):
+        b = self._getBrowser(DumbWSGIResponder, status="200 OK", body="Ack.")
+        url = "http://localhost/form"
+        b.go(url)
+        self.assertEqual(b.code, 200)
+        self.assertEqual(b._cur_page, "Ack.")
+
+    def test_set_code_404(self):
+        b = self._getBrowser(DumbWSGIResponder, "404")
+        url = "http://localhost/form"
+        b.go(url)
+        self.assertEqual(b.code, 404)

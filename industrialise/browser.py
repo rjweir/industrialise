@@ -34,8 +34,13 @@ class Browser(object):
         self._history.append(url)
 
     def _visit(self, url):
-        self._cur_page, self.url = self._load_data(url)
-        self._tree = fromstring(self._cur_page, base_url=self.url)
+        try:
+            self._cur_page, self.url = self._load_data(url)
+            self._tree = fromstring(self._cur_page, base_url=self.url)
+            self.code = 200
+        except urllib2.URLError, e:
+            self.code = e.code
+            self._cur_page = ''
 
     def back(self):
         self._history.pop()
