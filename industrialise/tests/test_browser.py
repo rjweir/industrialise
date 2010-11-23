@@ -27,7 +27,7 @@ class TestBrowser(unittest.TestCase):
         url = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
         b.go(url)
         self.assertEqual(b.url, url)
-        self.assertEqual(b._cur_page, open(url[6:]).read())
+        self.assertEqual(b.contents, open(url[6:]).read())
 
     def test_dupe_links(self):
         b = browser.Browser()
@@ -64,7 +64,7 @@ class TestBrowser(unittest.TestCase):
         url = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
         b._visit(url)
         self.assertEqual(b.url, url)
-        self.assertEqual(b._cur_page, open(url[6:]).read())
+        self.assertEqual(b.contents, open(url[6:]).read())
 
     def test_visiting_moves(self):
         b = browser.Browser()
@@ -73,7 +73,7 @@ class TestBrowser(unittest.TestCase):
         b.go(url1)
         b.go(url2)
         self.assertEqual(b.url, url2)
-        self.assertEqual(b._cur_page, open(url2[6:]).read())
+        self.assertEqual(b.contents, open(url2[6:]).read())
 
     def test_step_in_previous_river(self):
         b = browser.Browser()
@@ -102,14 +102,14 @@ class TestBrowser(unittest.TestCase):
         b.follow("over there")
         self.failUnless(t is not b._tree)
         self.assertEqual(b.url, next_url)
-        self.assertEqual(open(next_url[6:]).read(), b._cur_page)
+        self.assertEqual(open(next_url[6:]).read(), b.contents)
 
 
 class TestWSGIInterception(unittest.TestCase):
     def test_go(self):
         b = browser.WSGIInterceptingBrowser(simple_app)
         b.go('http://localhost:80/')
-        self.assertEqual(b._cur_page, 'WSGI intercept successful!\n')
+        self.assertEqual(b.contents, 'WSGI intercept successful!\n')
 
 
 class WSGIPostableStub(object):
@@ -214,7 +214,7 @@ class TestPosting(unittest.TestCase):
         url = "http://localhost/form"
         b.go(url)
         self.assertEqual(b.code, 200)
-        self.assertEqual(b._cur_page, "Ack.")
+        self.assertEqual(b.contents, "Ack.")
 
     def test_set_code_404(self):
         b = self._getBrowser(DumbWSGIResponder, "404")

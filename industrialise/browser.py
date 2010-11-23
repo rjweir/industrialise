@@ -17,7 +17,7 @@ class Browser(object):
         self._cookiejar = cookiejar
         self._opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self._cookiejar))
         self.url = None
-        self._cur_page = None
+        self.contents = None
         self._history = []
 
     def _load_data(self, url):
@@ -35,12 +35,12 @@ class Browser(object):
 
     def _visit(self, url):
         try:
-            self._cur_page, self.url = self._load_data(url)
-            self._tree = fromstring(self._cur_page, base_url=self.url)
+            self.contents, self.url = self._load_data(url)
+            self._tree = fromstring(self.contents, base_url=self.url)
             self.code = 200
         except urllib2.URLError, e:
             self.code = e.code
-            self._cur_page = ''
+            self.contents = ''
 
     def back(self):
         self._history.pop()
@@ -77,5 +77,5 @@ class WSGIInterceptingBrowser(Browser):
         self._opener = urllib2.build_opener(WSGI_HTTPHandler(), urllib2.HTTPCookieProcessor(self._cookiejar))
         wsgi_intercept.add_wsgi_intercept('localhost', 80, lambda:wsgi_app_creator)
         self.url = None
-        self._cur_page = None
+        self.contents = None
         self._history = []
