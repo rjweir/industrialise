@@ -168,6 +168,15 @@ class WSGIHeaderCapturer(object):
         return ["Ack."]
 
 
+class WSGIStaticServer(object):
+    """A WSGI app that just serves a static file."""
+
+    def __call__(self, environ, start_response):
+        body = open(os.path.join(os.getcwd(), "industrialise/tests/localform.html")).read()
+        start_response("200 OK", [('Content-Type', 'text/plain')])
+        return [body]
+
+
 class WSGIRedirectingStub(object):
     """A WSGI app that just redirects."""
 
@@ -216,6 +225,12 @@ class TestPosting(unittest.TestCase):
         self.assertEqual(response.code, 200)
         self.assertEqual(self._app.post_data['username'].value, username)
         self.assertEqual(self._app.post_data['submit'].value, 'Yes!')
+
+    def test_super_simple_scrape(self):
+        b = self._getBrowser(WSGIStaticServer)
+        url = "http://localhost/"
+        b.go(url)
+        self.assertEqual(b.find("//head/title")[0].text, "Some HTML5")
 
     def test_redirect(self):
         destination = "/destination"
