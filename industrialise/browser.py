@@ -67,12 +67,12 @@ class Browser(object):
     def find(self, path):
         return self._tree.xpath(path)
 
-    def open_http(self, method, url, values={}):
+    def _open_http(self, method, url, values={}):
         if method == "POST":
             return self._opener.open(url, urllib.urlencode(values))
 
     def submit(self, form, **kwargs):
-        return submit_form(form, open_http=self.open_http, **kwargs)
+        return submit_form(form, open_http=self._open_http, **kwargs)
 
 
 class WSGIInterceptingBrowser(Browser):
