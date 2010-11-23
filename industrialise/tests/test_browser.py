@@ -51,13 +51,13 @@ class TestBrowser(unittest.TestCase):
         b.go("file://%s/industrialise/tests/valid_html5.html" % os.getcwd())
         self.assertEqual(b.find('//h2'), [])
 
-    def test_history_gets_updated(self):
+    def testhistory_gets_updated(self):
         b = browser.Browser()
         url1 = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
         url2 = "file://%s/industrialise/tests/invalid_html5.html" % os.getcwd()
         b.go(url1)
         b.go(url2)
-        self.assertEqual(b._history, [url1, url2])
+        self.assertEqual(b.history, [url1, url2])
 
     def test_visit_once(self):
         b = browser.Browser()
@@ -83,7 +83,7 @@ class TestBrowser(unittest.TestCase):
         b.go(url2)
         b.back()
         self.assertEqual(b.url, url1)
-        self.assertEqual(b._history, [url1])
+        self.assertEqual(b.history, [url1])
 
     def test_reload(self):
         b = browser.Browser()

@@ -18,7 +18,7 @@ class Browser(object):
         self._opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self._cookiejar))
         self.url = None
         self.contents = None
-        self._history = []
+        self.history = []
 
     def _load_data(self, url):
         response = self._opener.open(url)
@@ -31,7 +31,7 @@ class Browser(object):
     def go(self, url):
         """Visit the provided url."""
         self._visit(url)
-        self._history.append(url)
+        self.history.append(url)
 
     def _visit(self, url):
         try:
@@ -43,8 +43,8 @@ class Browser(object):
             self.contents = ''
 
     def back(self):
-        self._history.pop()
-        self._visit(self._history[-1])
+        self.history.pop()
+        self._visit(self.history[-1])
 
     def follow(self, content):
         self._tree.make_links_absolute(self.url, resolve_base_href=True)
@@ -78,4 +78,4 @@ class WSGIInterceptingBrowser(Browser):
         wsgi_intercept.add_wsgi_intercept('localhost', 80, lambda:wsgi_app_creator)
         self.url = None
         self.contents = None
-        self._history = []
+        self.history = []
