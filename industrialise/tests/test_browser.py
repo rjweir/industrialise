@@ -137,6 +137,7 @@ class WSGIPostableStub(object):
         start_response(status, response_headers)
         return ['Ack\n']
 
+
 class DumbWSGIResponder(object):
     """A WSGI app that just returns the provided status, headers and body."""
 
@@ -199,7 +200,6 @@ class TestPosting(unittest.TestCase):
         self.assertEqual(response.code, 200)
         self.assertEqual(self._app.post_data['username'].value, username)
         self.assertEqual(self._app.post_data['submit'].value, 'Yes!')
-
 
     def test_redirect(self):
         destination = "/destination"
