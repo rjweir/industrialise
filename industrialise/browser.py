@@ -79,6 +79,7 @@ class Browser(object):
         response = submit_form(form, open_http=self._open_http, **kwargs)
         self.contents = response.read()
         self.url = response.url
+        self._tree = fromstring(self.contents, base_url=self.url)
         return response
 
 
