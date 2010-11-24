@@ -70,12 +70,9 @@ class Browser(object):
         return self._tree.xpath(path)
 
     def _open_http(self, method, url, values={}):
-        print "destination", url, "method", method, "values", values
         if method in ("POST", "post"):
-            print "posting!"
             return self._opener.open(url, urllib.urlencode(values))
         else:
-            print "not posting!"
             return self._opener.open(url_with_query(url, values))
 
     def submit(self, form, **kwargs):

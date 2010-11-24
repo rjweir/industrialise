@@ -177,6 +177,32 @@ class WSGIStaticServer(object):
         start_response("200 OK", [('Content-Type', 'text/plain')])
         return [body]
 
+class WSGIPostDataReturner(object):
+    """A WSGI app that returns posted data in the response body."""
+
+    def __call__(self, environ, start_response):
+        if environ['REQUEST_METHOD'] == 'GET':
+            return [open(os.path.join(os.getcwd(), "industrialise/tests/localform.html")).read()]
+        else:
+            return [environ['wsgi.input'].read()]
+
+class WSGIPostDataReturnerThatRedirects(object):
+    """A WSGI app that returns posted data in the response body."""
+
+    def __init__(self):
+        self.response = None
+
+    def __call__(self, environ, start_response):
+        if environ['PATH_INFO'] == '/ENDPOINT':
+            start_response("200 OK", [('Content-Type', 'text/plain')])
+            return [self.response]
+        elif environ['REQUEST_METHOD'] == 'GET':
+            start_response('200 OK', [('Content-type', 'text/plain')])
+            return [open(os.path.join(os.getcwd(), "industrialise/tests/localform.html")).read()]
+        else:
+            start_response('301 Redirect', [('Location', 'http://localhost/ENDPOINT')])
+            self.response = environ['wsgi.input'].read()
+            return []
 
 class WSGIRedirectingStub(object):
     """A WSGI app that just redirects."""
@@ -276,10 +302,25 @@ class TestPosting(unittest.TestCase):
                          urllib.urlencode([("username", "DAUSER")]))
 
     def test_contents_set_after_form_submit(self):
-        # TODO after a form submission, check that the Browser.contents attribute is set correctly
-        assert False
+        b = self._getBrowser(WSGIPostDataReturner)
+        b.go("http://localhost/")
+        form = b._tree.forms[0]
+        form.fields['username'] = 'someuser'
+        b.submit(form)
+        self.assertEqual(b.contents, urllib.urlencode([('username', 'someuser')]))
+
+    def test_url_correct_after_form_submit(self):
+        b = self._getBrowser(WSGIPostDataReturner)
+        b.go("http://localhost/notroot")
+        form = b._tree.forms[0]
+        form.fields['username'] = 'someuser'
+        b.submit(form)
+        self.assertEqual(b.url, 'http://localhost/')
 
     def test_follow_redirect_after_post(self):
-        # TODO after a form submission, check that we follow 301s and do a GET etc
-        # and that .url is correct afterwards
-        assert False
+        b = self._getBrowser(WSGIPostDataReturnerThatRedirects)
+        b.go("http://localhost/notroot")
+        form = b._tree.forms[0]
+        form.fields['username'] = 'someuser'
+        b.submit(form)
+        self.assertEqual(b.url, 'http://localhost/ENDPOINT')
