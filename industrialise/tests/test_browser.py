@@ -239,7 +239,7 @@ class WSGICookieSettingServer(object):
     def __call__(self, environ, start_response):
         headers  =[
             ('Content-type', 'text/plain'),
-            ('Set-Cookie', 'ACOOKIE'),
+            ('Set-Cookie', 'ACOOKIE=FOOBAR'),
             ]
         start_response('200 OK', headers)
         return ['Ack.']
@@ -261,6 +261,16 @@ class WSGIRedirectingStub(object):
             response_headers = [('Location', self.path)]
             start_response(status, response_headers)
             return []
+
+
+class WSGICookieReturningServer(object):
+    """A WSGI app that just returns cookies in the response body."""
+
+    def __call__(self, environ, start_response):
+        status = '200 OK'
+        response_headers = [('Content-type', 'text/plain')]
+        start_response(status, response_headers)
+        return [environ["HTTP_COOKIE"]]
 
 
 class TestPosting(unittest.TestCase):
@@ -379,3 +389,11 @@ class TestPosting(unittest.TestCase):
         b = self._getBrowser(WSGICookieSettingServer)
         b.go("http://localhost/")
         self.failUnless('ACOOKIE' in b._cookiejar._cookies['localhost.local']['/'])
+
+    def test_we_send_cookies_back(self):
+        from industrialise import browser
+        b1 = self._getBrowser(WSGICookieSettingServer)
+        b1.go("http://localhost/")
+        b2 = browser.WSGIInterceptingBrowser(wsgi_app_creator=WSGICookieReturningServer(), cookiejar=b1._cookiejar)
+        b2.go("http://localhost/")
+        self.assertEqual(b2.contents, 'ACOOKIE=FOOBAR')

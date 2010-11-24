@@ -91,11 +91,13 @@ def url_with_query(url, values):
 class WSGIInterceptingBrowser(Browser):
     """A Browser that uses wsgi-intercept to blah blah."""
 
-    def __init__(self, wsgi_app_creator):
+    def __init__(self, wsgi_app_creator, cookiejar=None):
         """
         @param wsgi_app_creator: wsgi app (ie two arg callable)
         """
-        self._cookiejar = cookielib.CookieJar()
+        if cookiejar is None:
+            cookiejar = cookielib.CookieJar()
+        self._cookiejar = cookiejar
         self._opener = urllib2.build_opener(WSGI_HTTPHandler(), urllib2.HTTPCookieProcessor(self._cookiejar))
         wsgi_intercept.add_wsgi_intercept('localhost', 80, lambda:wsgi_app_creator)
         self._tweak_user_agent(self._opener)
