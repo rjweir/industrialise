@@ -204,6 +204,22 @@ class WSGIPostDataReturnerThatRedirects(object):
             self.response = environ['wsgi.input'].read()
             return []
 
+
+class WSGIPostableThatReturnsAPage(object):
+    """A WSGI app that takes a POST and returns some data."""
+
+    def __init__(self):
+        self.response = None
+
+    def __call__(self, environ, start_response):
+        if environ['REQUEST_METHOD'] == 'GET':
+            start_response('200 OK', [('Content-type', 'text/plain')])
+            return [open(os.path.join(os.getcwd(), "industrialise/tests/localform.html")).read()]
+        else:
+            start_response('200 OK', [('Content-type', 'text/plain')])
+            return [open(os.path.join(os.getcwd(), "industrialise/tests/thirdpage.html")).read()]
+
+
 class WSGIRedirectingStub(object):
     """A WSGI app that just redirects."""
 
@@ -324,3 +340,12 @@ class TestPosting(unittest.TestCase):
         form.fields['username'] = 'someuser'
         b.submit(form)
         self.assertEqual(b.url, 'http://localhost/ENDPOINT')
+
+    def test_tree_updated_after_post(self):
+        b = self._getBrowser(WSGIPostableThatReturnsAPage)
+        b.go("http://localhost/notroot")
+        form = b._tree.forms[0]
+        form.fields['username'] = 'someuser'
+        self.assertEqual(len(b.find('//h1[@class="foo"]')), 0)
+        b.submit(form)
+        self.assertEqual(len(b.find('//h1[@class="foo"]')), 1)
