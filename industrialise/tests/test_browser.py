@@ -233,6 +233,16 @@ class WSGIPostableThatReturnsAPage(object):
             start_response('200 OK', [('Content-type', 'text/plain')])
             return [open(os.path.join(os.getcwd(), "industrialise/tests/thirdpage.html")).read()]
 
+class WSGICookieSettingServer(object):
+    """A WSGI app that just sets a cookie."""
+
+    def __call__(self, environ, start_response):
+        headers  =[
+            ('Content-type', 'text/plain'),
+            ('Set-Cookie', 'ACOOKIE'),
+            ]
+        start_response('200 OK', headers)
+        return ['Ack.']
 
 class WSGIRedirectingStub(object):
     """A WSGI app that just redirects."""
@@ -364,3 +374,8 @@ class TestPosting(unittest.TestCase):
         self.assertEqual(len(b.find('//h1[@class="foo"]')), 0)
         b.submit(form)
         self.assertEqual(len(b.find('//h1[@class="foo"]')), 1)
+
+    def test_cookies_end_up_in_cookiejar(self):
+        b = self._getBrowser(WSGICookieSettingServer)
+        b.go("http://localhost/")
+        self.failUnless('ACOOKIE' in b._cookiejar._cookies['localhost.local']['/'])
