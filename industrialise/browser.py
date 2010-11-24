@@ -18,6 +18,7 @@ class Browser(object):
         if cookiejar is None:
             cookiejar = cookielib.CookieJar()
         self._cookiejar = cookiejar
+        # TODO enable debugging using a urllib2.HTTPHandler(debuglevel=1)
         self._opener = urllib2.build_opener(urllib2.HTTPCookieProcessor(self._cookiejar))
         self._tweak_user_agent(self._opener)
         self.url = None
@@ -69,13 +70,19 @@ class Browser(object):
         return self._tree.xpath(path)
 
     def _open_http(self, method, url, values={}):
-        if method == "POST":
+        print "destination", url, "method", method, "values", values
+        if method in ("POST", "post"):
+            print "posting!"
             return self._opener.open(url, urllib.urlencode(values))
         else:
+            print "not posting!"
             return self._opener.open(url_with_query(url, values))
 
     def submit(self, form, **kwargs):
-        return submit_form(form, open_http=self._open_http, **kwargs)
+        response = submit_form(form, open_http=self._open_http, **kwargs)
+        self.contents = response.read()
+        self.url = response.url
+        return response
 
 
 def url_with_query(url, values):

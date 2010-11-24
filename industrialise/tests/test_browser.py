@@ -274,3 +274,12 @@ class TestPosting(unittest.TestCase):
         b.submit(form)
         self.assertEqual(self._app.headers['QUERY_STRING'],
                          urllib.urlencode([("username", "DAUSER")]))
+
+    def test_contents_set_after_form_submit(self):
+        # TODO after a form submission, check that the Browser.contents attribute is set correctly
+        assert False
+
+    def test_follow_redirect_after_post(self):
+        # TODO after a form submission, check that we follow 301s and do a GET etc
+        # and that .url is correct afterwards
+        assert False
