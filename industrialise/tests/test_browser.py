@@ -4,19 +4,20 @@ import os
 import cgi
 from wsgi_intercept.test_wsgi_app import simple_app
 
-from industrialise import browser
-
 class TestBrowser(unittest.TestCase):
 
     def test_provide_cookiejar(self):
+        from industrialise import browser
         sigil = object()
         b = browser.Browser(sigil)
         self.failUnless(sigil is b._cookiejar)
 
     def test_instantiate(self):
+        from industrialise import browser
         browser.Browser()
 
     def test_load_data(self):
+        from industrialise import browser
         b = browser.Browser()
         url = "file://%s/industrialise/tests/valid_html5.html"
         data, final_url = b._load_data(url % os.getcwd())
@@ -24,6 +25,7 @@ class TestBrowser(unittest.TestCase):
         self.assertEqual(final_url, url % os.getcwd())
 
     def test_going_sets_url_and_loads_page(self):
+        from industrialise import browser
         b = browser.Browser()
         url = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
         b.go(url)
@@ -31,28 +33,33 @@ class TestBrowser(unittest.TestCase):
         self.assertEqual(b.contents, open(url[6:]).read())
 
     def test_dupe_links(self):
+        from industrialise import browser
         b = browser.Browser()
         url = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
         b.go(url)
         self.assertRaises(ValueError, b.follow, "matchme")
 
     def test_nonexistent_links(self):
+        from industrialise import browser
         b = browser.Browser()
         url = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
         b.go(url)
         self.assertRaises(ValueError, b.follow, "dontmatchme")
 
     def test_finding_something_that_exists(self):
+        from industrialise import browser
         b = browser.Browser()
         b.go("file://%s/industrialise/tests/valid_html5.html" % os.getcwd())
         self.assertEqual(b.find('//h1')[0].text, "a title")
 
     def test_finding_something_that_does_not_exist(self):
+        from industrialise import browser
         b = browser.Browser()
         b.go("file://%s/industrialise/tests/valid_html5.html" % os.getcwd())
         self.assertEqual(b.find('//h2'), [])
 
     def testhistory_gets_updated(self):
+        from industrialise import browser
         b = browser.Browser()
         url1 = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
         url2 = "file://%s/industrialise/tests/invalid_html5.html" % os.getcwd()
@@ -61,6 +68,7 @@ class TestBrowser(unittest.TestCase):
         self.assertEqual(b.history, [url1, url2])
 
     def test_visit_once(self):
+        from industrialise import browser
         b = browser.Browser()
         url = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
         b._visit(url)
@@ -68,6 +76,7 @@ class TestBrowser(unittest.TestCase):
         self.assertEqual(b.contents, open(url[6:]).read())
 
     def test_visiting_moves(self):
+        from industrialise import browser
         b = browser.Browser()
         url1 = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
         url2 = "file://%s/industrialise/tests/invalid_html5.html" % os.getcwd()
@@ -77,6 +86,7 @@ class TestBrowser(unittest.TestCase):
         self.assertEqual(b.contents, open(url2[6:]).read())
 
     def test_step_in_previous_river(self):
+        from industrialise import browser
         b = browser.Browser()
         url1 = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
         url2 = "file://%s/industrialise/tests/invalid_html5.html" % os.getcwd()
@@ -87,6 +97,7 @@ class TestBrowser(unittest.TestCase):
         self.assertEqual(b.history, [url1])
 
     def test_reload(self):
+        from industrialise import browser
         b = browser.Browser()
         url = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
         b.go(url)
@@ -95,6 +106,7 @@ class TestBrowser(unittest.TestCase):
         self.failUnless(t is not b._tree)
 
     def test_follow_link(self):
+        from industrialise import browser
         b = browser.Browser()
         url = "file://%s/industrialise/tests/valid_html5.html" % os.getcwd()
         next_url = "file://%s/industrialise/tests/invalid_html5.html" % os.getcwd()
@@ -106,6 +118,7 @@ class TestBrowser(unittest.TestCase):
         self.assertEqual(open(next_url[6:]).read(), b.contents)
 
     def test_tweak_user_agent(self):
+        from industrialise import browser
         b = browser.Browser()
         u_a = dict(b._opener.addheaders)['User-agent']
         self.failUnless('Python-urllib' in u_a)
@@ -114,6 +127,7 @@ class TestBrowser(unittest.TestCase):
 
 class TestWSGIInterception(unittest.TestCase):
     def test_go(self):
+        from industrialise import browser
         b = browser.WSGIInterceptingBrowser(simple_app)
         b.go('http://localhost:80/')
         self.assertEqual(b.contents, 'WSGI intercept successful!\n')
@@ -241,6 +255,7 @@ class WSGIRedirectingStub(object):
 
 class TestPosting(unittest.TestCase):
     def _getBrowser(self, app=WSGIPostableStub, *args, **kwargs):
+        from industrialise import browser
         self._app = app(*args, **kwargs)
         return browser.WSGIInterceptingBrowser(self._app)
 
