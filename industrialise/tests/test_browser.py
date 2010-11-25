@@ -5,7 +5,7 @@ import cgi
 from wsgi_intercept.test_wsgi_app import simple_app
 
 def build_url_for_file(name):
-    return "file://%s/industrialise/tests/%s" % (os.getcwd(), name)
+    return "file://%s/industrialise/tests/html/%s" % (os.getcwd(), name)
 
 class TestBrowser(unittest.TestCase):
 
@@ -24,7 +24,7 @@ class TestBrowser(unittest.TestCase):
         b = browser.Browser()
         url = build_url_for_file("valid_html5.html")
         data, final_url = b._load_data(url)
-        self.assertEqual(data, open("industrialise/tests/valid_html5.html").read())
+        self.assertEqual(data, open("industrialise/tests/html/valid_html5.html").read())
         self.assertEqual(final_url, url)
 
     def test_going_sets_url_and_loads_page(self):
@@ -142,7 +142,7 @@ class WSGIPostableStub(object):
     def __init__(self):
         self.post_data = None
         self.map = {
-            '/form': open(os.path.join(os.getcwd(), "industrialise/tests/localform.html")).read()
+            '/form': open(os.path.join(os.getcwd(), "industrialise/tests/html/localform.html")).read()
             }
 
     def __call__(self, environ, start_response):
@@ -190,7 +190,7 @@ class WSGIStaticServer(object):
     """A WSGI app that just serves a static file."""
 
     def __call__(self, environ, start_response):
-        body = open(os.path.join(os.getcwd(), "industrialise/tests/localform.html")).read()
+        body = open(os.path.join(os.getcwd(), "industrialise/tests/html/localform.html")).read()
         start_response("200 OK", [('Content-Type', 'text/plain')])
         return [body]
 
@@ -199,7 +199,7 @@ class WSGIPostDataReturner(object):
 
     def __call__(self, environ, start_response):
         if environ['REQUEST_METHOD'] == 'GET':
-            return [open(os.path.join(os.getcwd(), "industrialise/tests/localform.html")).read()]
+            return [open(os.path.join(os.getcwd(), "industrialise/tests/html/localform.html")).read()]
         else:
             return [environ['wsgi.input'].read()]
 
@@ -215,7 +215,7 @@ class WSGIPostDataReturnerThatRedirects(object):
             return [self.response]
         elif environ['REQUEST_METHOD'] == 'GET':
             start_response('200 OK', [('Content-type', 'text/plain')])
-            return [open(os.path.join(os.getcwd(), "industrialise/tests/localform.html")).read()]
+            return [open(os.path.join(os.getcwd(), "industrialise/tests/html/localform.html")).read()]
         else:
             start_response('301 Redirect', [('Location', 'http://localhost/ENDPOINT')])
             self.response = environ['wsgi.input'].read()
@@ -231,10 +231,10 @@ class WSGIPostableThatReturnsAPage(object):
     def __call__(self, environ, start_response):
         if environ['REQUEST_METHOD'] == 'GET':
             start_response('200 OK', [('Content-type', 'text/plain')])
-            return [open(os.path.join(os.getcwd(), "industrialise/tests/localform.html")).read()]
+            return [open(os.path.join(os.getcwd(), "industrialise/tests/html/localform.html")).read()]
         else:
             start_response('200 OK', [('Content-type', 'text/plain')])
-            return [open(os.path.join(os.getcwd(), "industrialise/tests/thirdpage.html")).read()]
+            return [open(os.path.join(os.getcwd(), "industrialise/tests/html/thirdpage.html")).read()]
 
 class WSGICookieSettingServer(object):
     """A WSGI app that just sets a cookie."""
