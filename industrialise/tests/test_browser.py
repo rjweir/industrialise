@@ -23,9 +23,11 @@ class TestBrowser(unittest.TestCase):
         from industrialise import browser
         b = browser.Browser()
         url = build_url_for_file("valid_html5.html")
-        data, final_url = b._load_data(url)
-        self.assertEqual(data, open("industrialise/tests/html/valid_html5.html").read())
+        data, final_url, info = b._load_data(url)
+        from_disk = open("industrialise/tests/html/valid_html5.html").read()
+        self.assertEqual(data, from_disk)
         self.assertEqual(final_url, url)
+        self.assertEqual(info['Content-length'], str(len(from_disk)))
 
     def test_going_sets_url_and_loads_page(self):
         from industrialise import browser
@@ -400,3 +402,13 @@ class TestPosting(unittest.TestCase):
         b2 = browser.WSGIInterceptingBrowser(wsgi_app_creator=WSGICookieReturningServer(), cookiejar=b1._cookiejar)
         b2.go("http://localhost/")
         self.assertEqual(b2.contents, 'ACOOKIE=FOOBAR')
+
+    def test_response_code_after_submit(self):
+        # TODO we don't set .code
+        pass
+
+    def test_info_is_set_after_submission(self):
+        pass
+
+    def test_info_is_set_after_load(self):
+        pass

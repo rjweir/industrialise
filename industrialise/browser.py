@@ -23,6 +23,8 @@ class Browser(object):
         self._tweak_user_agent(self._opener)
         self.url = None
         self.contents = None
+        self.info = None
+        self.code = None
         self.history = []
 
     def _tweak_user_agent(self, opener):
@@ -34,7 +36,7 @@ class Browser(object):
     def _load_data(self, url):
         response = self._opener.open(url)
         self.response_code = response.getcode()
-        return response.read(), response.geturl()
+        return response.read(), response.geturl(), response.info()
 
     def reload(self):
         self._visit(self.url)
@@ -46,7 +48,7 @@ class Browser(object):
 
     def _visit(self, url):
         try:
-            self.contents, self.url = self._load_data(url)
+            self.contents, self.url, self.info = self._load_data(url)
             self._tree = fromstring(self.contents, base_url=self.url)
             self.code = 200
         except urllib2.URLError, e:
@@ -80,6 +82,7 @@ class Browser(object):
         self.contents = response.read()
         self.url = response.url
         self._tree = fromstring(self.contents, base_url=self.url)
+        self.info = response.info()
         return response
 
 
