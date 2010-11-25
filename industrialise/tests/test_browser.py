@@ -224,6 +224,25 @@ class WSGIPostDataReturnerThatRedirects(object):
             return []
 
 
+class WSGIPostDataReturnerThatRedirectsToA404(object):
+    """A WSGI app that takes a POST and then redirects to a 404 page."""
+
+    def __init__(self):
+        self.response = None
+
+    def __call__(self, environ, start_response):
+        if environ['PATH_INFO'] == '/ENDPOINT':
+            start_response("200 OK", [('Content-Type', 'text/plain')])
+            return [open('industrialise/tests/html/localform.html').read()]
+        elif environ['REQUEST_METHOD'] == 'GET':
+            start_response('404 Not Found', [('Content-type', 'text/plain')])
+            return [open("industrialise/tests/html/localform.html").read()]
+        else:
+            start_response('301 Redirect', [('Location', 'http://localhost/NOTENDPOINT')])
+            self.response = environ['wsgi.input'].read()
+            return [open('industrialise/tests/html/localform.html').read()]
+
+
 class WSGIPostableThatReturnsAPage(object):
     """A WSGI app that takes a POST and returns some data."""
 
@@ -404,11 +423,19 @@ class TestPosting(unittest.TestCase):
         self.assertEqual(b2.contents, 'ACOOKIE=FOOBAR')
 
     def test_response_code_after_submit(self):
-        # TODO we don't set .code
-        pass
+        b = self._getBrowser(WSGIPostDataReturnerThatRedirectsToA404)
+        b.go("http://localhost/ENDPOINT")
+        form = b._tree.forms[0]
+        form.fields['username'] = 'someuser'
+        b.submit(form)
+        self.assertEqual(b.code, 404)
 
     def test_info_is_set_after_submission(self):
         pass
 
     def test_info_is_set_after_load(self):
+        pass
+
+    def test_tree_after_failure(self):
+        # TODO not sure what should happen
         pass

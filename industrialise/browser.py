@@ -78,13 +78,17 @@ class Browser(object):
             return self._opener.open(url_with_query(url, values))
 
     def submit(self, form, **kwargs):
-        response = submit_form(form, open_http=self._open_http, **kwargs)
-        self.contents = response.read()
-        self.url = response.url
-        self._tree = fromstring(self.contents, base_url=self.url)
-        self.info = response.info()
-        return response
-
+        try:
+            response = submit_form(form, open_http=self._open_http, **kwargs)
+            self.contents = response.read()
+            self.url = response.url
+            self._tree = fromstring(self.contents, base_url=self.url)
+            self.info = response.info()
+            self.code = 200
+            return response
+        except urllib2.URLError, e:
+            self.code = e.code
+            self.contents = ''
 
 def url_with_query(url, values):
      parts = urlparse.urlparse(url)
