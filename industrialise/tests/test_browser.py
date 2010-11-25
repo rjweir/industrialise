@@ -142,7 +142,7 @@ class WSGIPostableStub(object):
     def __init__(self):
         self.post_data = None
         self.map = {
-            '/form': open(os.path.join(os.getcwd(), "industrialise/tests/html/localform.html")).read()
+            '/form': open("industrialise/tests/html/localform.html").read()
             }
 
     def __call__(self, environ, start_response):
@@ -190,7 +190,7 @@ class WSGIStaticServer(object):
     """A WSGI app that just serves a static file."""
 
     def __call__(self, environ, start_response):
-        body = open(os.path.join(os.getcwd(), "industrialise/tests/html/localform.html")).read()
+        body = open("industrialise/tests/html/localform.html").read()
         start_response("200 OK", [('Content-Type', 'text/plain')])
         return [body]
 
@@ -199,7 +199,7 @@ class WSGIPostDataReturner(object):
 
     def __call__(self, environ, start_response):
         if environ['REQUEST_METHOD'] == 'GET':
-            return [open(os.path.join(os.getcwd(), "industrialise/tests/html/localform.html")).read()]
+            return [open("industrialise/tests/html/localform.html").read()]
         else:
             return [environ['wsgi.input'].read()]
 
@@ -215,7 +215,7 @@ class WSGIPostDataReturnerThatRedirects(object):
             return [self.response]
         elif environ['REQUEST_METHOD'] == 'GET':
             start_response('200 OK', [('Content-type', 'text/plain')])
-            return [open(os.path.join(os.getcwd(), "industrialise/tests/html/localform.html")).read()]
+            return [open("industrialise/tests/html/localform.html").read()]
         else:
             start_response('301 Redirect', [('Location', 'http://localhost/ENDPOINT')])
             self.response = environ['wsgi.input'].read()
@@ -231,10 +231,10 @@ class WSGIPostableThatReturnsAPage(object):
     def __call__(self, environ, start_response):
         if environ['REQUEST_METHOD'] == 'GET':
             start_response('200 OK', [('Content-type', 'text/plain')])
-            return [open(os.path.join(os.getcwd(), "industrialise/tests/html/localform.html")).read()]
+            return [open("industrialise/tests/html/localform.html").read()]
         else:
             start_response('200 OK', [('Content-type', 'text/plain')])
-            return [open(os.path.join(os.getcwd(), "industrialise/tests/html/thirdpage.html")).read()]
+            return [open("industrialise/tests/html/thirdpage.html").read()]
 
 class WSGICookieSettingServer(object):
     """A WSGI app that just sets a cookie."""
