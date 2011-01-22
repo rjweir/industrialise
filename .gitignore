@@ -8,3 +8,7 @@
 /.Python
 
 /.coverage
+.DS_Store
+/Library/*
+/docs/_build/*
+/man/*
