@@ -1,0 +1,5 @@
+Industrialise's API documentation
+=================================
+
+.. automodule:: industrialise.browser
+   :members:
