@@ -7,3 +7,6 @@
  * robots.txt support
  * simplify form handling
  * referer support
+ * handle unamed forms
+ * allow xpath for __contains__ 
+ * file uplaod support
