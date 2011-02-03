@@ -4,6 +4,7 @@ import urllib
 import urllib2
 import urlparse
 import cookielib
+import robotparser
 
 from lxml.html import fromstring, submit_form
 import wsgi_intercept
@@ -26,11 +27,13 @@ class Browser(object):
         self.info = None
         self.code = None
         self.history = []
+        self._robots_txt_cache = {}
 
     def _tweak_user_agent(self, opener):
         headers = dict(opener.addheaders)
-        headers['User-agent'] = "%s; (Industrialise %s)" % (headers['User-agent'],
-                                                           VERSION)
+        self._user_agent = "%s; (Industrialise %s)" % (headers['User-agent'],
+                                                       VERSION)
+        headers['User-agent'] = self._user_agent
         opener.addheaders = headers.items()
 
     def _load_data(self, url):
@@ -46,8 +49,24 @@ class Browser(object):
         self._visit(url)
         self.history.append(url)
 
+    def _robots_txt_allows_this(self, url):
+        robots_url = self._calculate_robots_txt_url(url)
+        if robots_url not in self._robots_txt_cache:
+            p = robotparser.RobotFileParser()
+            p.set_url(robots_url)
+            try:
+                contents, _, _ = self._load_data(robots_url)
+                p.parse(contents.splitlines())
+                self._robots_txt_cache[robots_url] = p
+            except IOError:
+                self._robots_txt_cache[robots_url] = FourOhFouredRobotsTxt()
+        approver = self._robots_txt_cache[robots_url]
+        return approver.can_fetch(self._user_agent, url)
+
     def _visit(self, url):
         try:
+            if not self._robots_txt_allows_this(url):
+                raise ValueError("robots.txt forbids fetching this.")
             self.contents, self.url, self.info = self._load_data(url)
             self._tree = fromstring(self.contents, base_url=self.url)
             self.code = 200
@@ -95,6 +114,17 @@ class Browser(object):
 
     forms = property(_forms)
 
+    def _calculate_robots_txt_url(self, url):
+        bits = urlparse.urlparse(url)
+        scheme, netloc, _, _, _, _ = bits
+        return "%s://%s/robots.txt" % (scheme, netloc)
+
+class FourOhFouredRobotsTxt(object):
+    """robotparser stub that always returns True for can_fetch."""
+
+    def can_fetch(self, user_agent, url):
+        return True
+
 class Form(object):
     def __init__(self, form):
         self._form = form
@@ -124,3 +154,4 @@ class WSGIInterceptingBrowser(Browser):
         self.url = None
         self.contents = None
         self.history = []
+        self._robots_txt_cache = {}

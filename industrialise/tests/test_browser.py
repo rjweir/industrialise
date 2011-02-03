@@ -152,6 +152,23 @@ class TestBrowser(unittest.TestCase):
         self.failUnless('Python-urllib' in u_a)
         self.failUnless('Industrialise' in u_a)
 
+    def test_calc_robots_txt_url_for_example(self):
+        from industrialise import browser
+        b = browser.Browser()
+        url = b._calculate_robots_txt_url("http://example.org/")
+        self.assertEqual(url, "http://example.org/robots.txt")
+
+    def test_calc_robots_txt_url_for_file(self):
+        from industrialise import browser
+        b = browser.Browser()
+        url = b._calculate_robots_txt_url(build_url_for_file("valid_html5.html"))
+        self.assertEqual(url, "file:///robots.txt")
+
+    def test_built_robots_txt_cache(self):
+        from industrialise import browser
+        b = browser.Browser()
+        b._robots_txt_cache
+
 
 class TestWSGIInterception(unittest.TestCase):
     def test_go(self):
@@ -265,6 +282,51 @@ class WSGIPostDataReturnerThatRedirectsToA404(object):
             self.response = environ['wsgi.input'].read()
             return [open('industrialise/tests/html/localform.html').read()]
 
+class WSGIRobotstxtDoesntExist(object):
+    """robots.txt 404s."""
+
+    def __call__(self, environ, start_response):
+        if environ['PATH_INFO'] == '/robots.txt':
+            start_response("404 Not Found", [('Content-Type', 'text/plain')])
+            return [""]
+        else:
+            self.cheated = True
+            start_response("200 OK", [('Content-Type', 'text/plain')])
+            return ["Hello, world\n"]
+
+class WSGIRobotsTxtForbidsEverything(object):
+    """A WSGI app that serves a robots.txt that forbids everything."""
+
+    def __init__(self):
+        self.response = None
+        self.cheated = False
+
+    def __call__(self, environ, start_response):
+        if environ['PATH_INFO'] == '/robots.txt':
+            start_response("200 OK", [('Content-Type', 'text/plain')])
+            return [("User-agent: *\n"
+                     "Disallow: /\n")]
+        else:
+            self.cheated = True
+            start_response("200 OK", [('Content-Type', 'text/plain')])
+            return ["Hello, world\n"]
+
+class WSGIRobotstxtAllowsUs(object):
+    """A WSGI app that serves a robots.txt that allows us."""
+
+    def __init__(self):
+        self.response = None
+        self.cheated = False
+
+    def __call__(self, environ, start_response):
+        if environ['PATH_INFO'] == '/robots.txt':
+            start_response("200 OK", [('Content-Type', 'text/plain')])
+            return [("User-agent: wget\n"
+                     "Disallow: /\n")]
+        else:
+            self.cheated = True
+            start_response("200 OK", [('Content-Type', 'text/plain')])
+            return ["Hello, world\n"]
 
 class WSGIPostableThatReturnsAPage(object):
     """A WSGI app that takes a POST and returns some data."""
@@ -469,3 +531,25 @@ class TestPosting(unittest.TestCase):
     def test_tree_after_failure(self):
         # TODO not sure what should happen
         pass
+
+    def test_fetch_url_forbidden_by_robotstxt(self):
+        b = self._getBrowser(WSGIRobotsTxtForbidsEverything)
+        self.assertRaises(ValueError, b.go, "http://localhost/ENDPOINT")
+        self.failIf(self._app.cheated)
+
+    def test_fetch_url_when_robotstxt_404s(self):
+        b = self._getBrowser(WSGIRobotstxtDoesntExist)
+        b.go("http://localhost/ENDPOINT")
+        self.assertEqual(b.contents, "Hello, world\n")
+
+    def test_allow_this_forbidden_by_robotstxt(self):
+        b = self._getBrowser(WSGIRobotsTxtForbidsEverything)
+        self.failIf(b._robots_txt_allows_this("http://localhost/ENDPOINT"))
+
+    def test_allow_this_when_robotstxt_404s(self):
+        b = self._getBrowser(WSGIRobotstxtDoesntExist)
+        self.failUnless(b._robots_txt_allows_this("http://localhost/ENDPOINT"))
+
+    def test_allow_this_when_robotstxt_ok(self):
+        b = self._getBrowser(WSGIRobotstxtAllowsUs)
+        self.failUnless(b._robots_txt_allows_this("http://localhost/ENDPOINT"))
