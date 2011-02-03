@@ -1,0 +1,37 @@
+Industrialise tutorial
+=================================
+
+Browser
+-------
+
+A "browser" instance is a single self contained pretend web browser,
+like a single tab in Chrome or Firefox (but not running in a separate
+process like the tabs might be).  It has its' own set of cookies, its
+own history and its own forms etc.
+
+So, let's try it out:
+
+.. testcode::
+
+    from industrialise import browser
+
+    b = browser.Browser()
+    b.go("http://www.example.org/")
+    print b.contents
+
+the `.contents` attribute contains the whole contents of the current
+page (ie the HTML or whatever).
+    
+
+XPath
+~~~~~
+
+Forms
+~~~~~
+
+._forms
+
+WSGIInterceptingBrowser
+-----------------------
+
+:py:class:`industrialise.browser.WSGIInterceptingBrowser` is used to
