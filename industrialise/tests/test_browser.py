@@ -152,6 +152,11 @@ class TestBrowser(unittest.TestCase):
         self.failUnless('Python-urllib' in u_a)
         self.failUnless('Industrialise' in u_a)
 
+    def test_calc_robots_txt_url(self):
+        from industrialise import browser
+        b = browser.Browser()
+        url = b._calculate_robots_txt_url("http://example.org/")
+        self.assertEqual(url, "http://example.org/robots.txt")
 
 class TestWSGIInterception(unittest.TestCase):
     def test_go(self):

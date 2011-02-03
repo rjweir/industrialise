@@ -95,6 +95,11 @@ class Browser(object):
 
     forms = property(_forms)
 
+    def _calculate_robots_txt_url(self, url):
+        bits = urlparse.urlparse(url)
+        scheme, netloc, _, _, _, _ = bits
+        return "%s://%s/robots.txt" % (scheme, netloc)
+
 class Form(object):
     def __init__(self, form):
         self._form = form
