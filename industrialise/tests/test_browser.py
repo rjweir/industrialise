@@ -1,3 +1,5 @@
+# -*- test-case-name: "industrialise.tests.test_browser" -*-
+
 import unittest
 import urllib
 import os
