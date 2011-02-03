@@ -1,6 +1,5 @@
  * tidy up tests
  * fix up tests
- * move html files to a particular dir
  * add a wsgi thing that serves files from said dir and stores post data to anywhere else
  * add test that checks we can follow a link on a page and submit on the new one
   *         self._tree.make_links_absolute(self.url, resolve_base_href=True) in follow looks dubious
