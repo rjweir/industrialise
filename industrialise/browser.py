@@ -79,7 +79,7 @@ class Browser(object):
 
     def submit(self, form, **kwargs):
         try:
-            response = submit_form(form, open_http=self._open_http, **kwargs)
+            response = submit_form(form._form, open_http=self._open_http, **kwargs)
             self.contents = response.read()
             self.url = response.url
             self._tree = fromstring(self.contents, base_url=self.url)
@@ -89,6 +89,19 @@ class Browser(object):
         except urllib2.URLError, e:
             self.code = e.code
             self.contents = ''
+
+    def _forms(self):
+        return [Form(form) for form in self._tree.forms]
+
+    forms = property(_forms)
+
+class Form(object):
+    def __init__(self, form):
+        self._form = form
+        self.fields = form.fields
+
+    def __repr__(self):
+        return "<Form: %s to %s>" % (self._form.method, self._form.action)
 
 def url_with_query(url, values):
      parts = urlparse.urlparse(url)

@@ -9,7 +9,28 @@ from wsgi_intercept.test_wsgi_app import simple_app
 def build_url_for_file(name):
     return "file://%s/industrialise/tests/html/%s" % (os.getcwd(), name)
 
+class TestForm(unittest.TestCase):
+    def test_instantiate(self):
+        from industrialise import browser
+        class _Form(object):
+            fields = None
+        browser.Form(_Form())
+
+    def test_got_form(self):
+        from industrialise import browser
+        class _Form(object):
+            fields = None
+        sigil = _Form()
+        form = browser.Form(sigil)
+        self.failUnless(form._form is sigil)
+
 class TestBrowser(unittest.TestCase):
+
+    def test_get_form_instance(self):
+        from industrialise import browser
+        url = build_url_for_file("localform.html")
+        b = browser.Browser()
+        b.go(url)
 
     def test_provide_cookiejar(self):
         from industrialise import browser
@@ -310,7 +331,7 @@ class TestPosting(unittest.TestCase):
         b = self._getBrowser()
         url = build_url_for_file("localform.html")
         b.go(url)
-        form = b._tree.forms[0]
+        form = b.forms[0]
         form.fields["username"] = username
         url = "http://localhost/"
         b._tree.make_links_absolute(url, resolve_base_href=True)
@@ -323,7 +344,7 @@ class TestPosting(unittest.TestCase):
         b = self._getBrowser()
         url = "http://localhost/form"
         b.go(url)
-        form = b._tree.forms[0]
+        form = b.forms[0]
         form.fields["username"] = username
         response = b.submit(form, extra_values={'submit': 'Yes!'})
         self.assertEqual(response.code, 200)
@@ -371,7 +392,7 @@ class TestPosting(unittest.TestCase):
         b.go(url)
         url = "http://localhost/"
         b._tree.make_links_absolute(url, resolve_base_href=True)
-        form = b._tree.forms[1]
+        form = b.forms[1]
         form.fields["username"] = username
         url = "http://localhost/"
         b.submit(form)
@@ -381,7 +402,7 @@ class TestPosting(unittest.TestCase):
     def test_contents_set_after_form_submit(self):
         b = self._getBrowser(WSGIPostDataReturner)
         b.go("http://localhost/")
-        form = b._tree.forms[0]
+        form = b.forms[0]
         form.fields['username'] = 'someuser'
         b.submit(form)
         self.assertEqual(b.contents, urllib.urlencode([('username', 'someuser')]))
@@ -389,7 +410,7 @@ class TestPosting(unittest.TestCase):
     def test_url_correct_after_form_submit(self):
         b = self._getBrowser(WSGIPostDataReturner)
         b.go("http://localhost/notroot")
-        form = b._tree.forms[0]
+        form = b.forms[0]
         form.fields['username'] = 'someuser'
         b.submit(form)
         self.assertEqual(b.url, 'http://localhost/')
@@ -397,7 +418,7 @@ class TestPosting(unittest.TestCase):
     def test_follow_redirect_after_post(self):
         b = self._getBrowser(WSGIPostDataReturnerThatRedirects)
         b.go("http://localhost/notroot")
-        form = b._tree.forms[0]
+        form = b.forms[0]
         form.fields['username'] = 'someuser'
         b.submit(form)
         self.assertEqual(b.url, 'http://localhost/ENDPOINT')
@@ -405,7 +426,7 @@ class TestPosting(unittest.TestCase):
     def test_tree_updated_after_post(self):
         b = self._getBrowser(WSGIPostableThatReturnsAPage)
         b.go("http://localhost/notroot")
-        form = b._tree.forms[0]
+        form = b.forms[0]
         form.fields['username'] = 'someuser'
         self.assertEqual(len(b.find('//h1[@class="foo"]')), 0)
         b.submit(form)
@@ -427,7 +448,7 @@ class TestPosting(unittest.TestCase):
     def test_response_code_after_submit(self):
         b = self._getBrowser(WSGIPostDataReturnerThatRedirectsToA404)
         b.go("http://localhost/ENDPOINT")
-        form = b._tree.forms[0]
+        form = b.forms[0]
         form.fields['username'] = 'someuser'
         b.submit(form)
         self.assertEqual(b.code, 404)
@@ -435,7 +456,7 @@ class TestPosting(unittest.TestCase):
     def test_info_is_set_after_submission(self):
         b = self._getBrowser(WSGIPostDataReturnerThatRedirectsToA404)
         b.go("http://localhost/ENDPOINT")
-        form = b._tree.forms[0]
+        form = b.forms[0]
         form.fields['username'] = 'someuser'
         b.submit(form)
         self.assertEqual(b.info['Content-type'], 'text/plain')
