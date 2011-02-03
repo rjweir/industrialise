@@ -431,10 +431,17 @@ class TestPosting(unittest.TestCase):
         self.assertEqual(b.code, 404)
 
     def test_info_is_set_after_submission(self):
-        pass
+        b = self._getBrowser(WSGIPostDataReturnerThatRedirectsToA404)
+        b.go("http://localhost/ENDPOINT")
+        form = b._tree.forms[0]
+        form.fields['username'] = 'someuser'
+        b.submit(form)
+        self.assertEqual(b.info['Content-type'], 'text/plain')
 
     def test_info_is_set_after_load(self):
-        pass
+        b = self._getBrowser(WSGIPostDataReturnerThatRedirectsToA404)
+        b.go("http://localhost/ENDPOINT")
+        self.assertEqual(b.info['Content-type'], 'text/plain')
 
     def test_tree_after_failure(self):
         # TODO not sure what should happen
