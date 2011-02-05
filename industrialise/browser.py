@@ -30,6 +30,7 @@ class Browser(object):
         self._robots_txt_cache = {}
 
     def _tweak_user_agent(self, opener):
+        """Alter the user agent of the provided opener."""
         headers = dict(opener.addheaders)
         self._user_agent = "%s; (Industrialise %s)" % (headers['User-agent'],
                                                        VERSION)
@@ -37,11 +38,13 @@ class Browser(object):
         opener.addheaders = headers.items()
 
     def _load_data(self, url):
+        """Make the actual request."""
         response = self._opener.open(url)
         self.response_code = response.getcode()
         return response.read(), response.geturl(), response.info()
 
     def reload(self):
+        """Reload the current page.  Does not update the history."""
         self._visit(self.url)
 
     def go(self, url):
@@ -50,6 +53,7 @@ class Browser(object):
         self.history.append(url)
 
     def _robots_txt_allows_this(self, url):
+        """Check whether the relevant robots.txt allows us to visit the given url."""
         robots_url = self._calculate_robots_txt_url(url)
         if robots_url not in self._robots_txt_cache:
             p = robotparser.RobotFileParser()
@@ -64,6 +68,7 @@ class Browser(object):
         return approver.can_fetch(self._user_agent, url)
 
     def _visit(self, url):
+        """Visit the given url, after checking the robots.txt says it is ok."""
         try:
             if not self._robots_txt_allows_this(url):
                 raise ValueError("robots.txt forbids fetching this.")
@@ -75,10 +80,17 @@ class Browser(object):
             self.contents = ''
 
     def back(self):
+        """Go back one level in the history, removing the current url from the history stack."""
         self.history.pop()
         self._visit(self.history[-1])
 
     def follow(self, content):
+        """Find a link with the given text contents, and follow it.
+
+        <a href="...">Text contents</a>
+
+        Note: if more than one link matches, a ValueError will be raised.
+        """
         self._tree.make_links_absolute(self.url, resolve_base_href=True)
         links = self._tree.xpath('//a[text() = $content]', content=content)
         if len(links) < 1:
@@ -88,6 +100,7 @@ class Browser(object):
         self.go(links[0].attrib['href'])
 
     def find(self, path):
+        """Do an xpath query on the current page, returning a list of lxml Elements that match."""
         return self._tree.xpath(path)
 
     def _open_http(self, method, url, values={}):
@@ -112,9 +125,10 @@ class Browser(object):
     def _forms(self):
         return [Form(form) for form in self._tree.forms]
 
-    forms = property(_forms)
+    forms = property(_forms, doc="Form objects from the current page")
 
     def _calculate_robots_txt_url(self, url):
+        """Figure out what the correct robots.txt is for the given url."""
         bits = urlparse.urlparse(url)
         scheme, netloc, _, _, _, _ = bits
         return "%s://%s/robots.txt" % (scheme, netloc)
@@ -126,6 +140,8 @@ class FourOhFouredRobotsTxt(object):
         return True
 
 class Form(object):
+    """A trivial wrapper for lxml form objects - these just have a prettier repr."""
+
     def __init__(self, form):
         self._form = form
         self.fields = form.fields
