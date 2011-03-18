@@ -10,7 +10,7 @@ from lxml.html import fromstring, submit_form
 import wsgi_intercept
 from wsgi_intercept.urllib2_intercept.wsgi_urllib2 import WSGI_HTTPHandler
 
-from industrialise._version import VERSION
+from industrialise import __version__ as VERSION
 
 class Browser(object):
     """A pretend browser.  Holds state for a browsing session."""

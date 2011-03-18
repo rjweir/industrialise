@@ -2,10 +2,10 @@
 
 from distutils.core import setup
 
-from industrialise._version import VERSION
+from industrialise import __version__
 
 setup(name='Industrialise',
-      version=VERSION,
+      version=__version__,
       description='lxml.html-powered web automation',
       author='Rob Weir',
       author_email='rweir@ertius.org',
