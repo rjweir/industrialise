@@ -12,3 +12,5 @@
 /Library/*
 /docs/_build/*
 /man/*
+/.idea
+
