@@ -1,7 +1,7 @@
 from industrialise import browser
 
-username = 'YOURUSERNAME'
-password = 'YOURPASSWORD'
+username = 'username'
+password = 'password'
 
 b = browser.Browser()
 b.go("http://slashdot.org/")
