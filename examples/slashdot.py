@@ -5,7 +5,8 @@ password = 'YOURPASSWORD'
 
 b = browser.Browser()
 b.go("http://slashdot.org/")
-form = b._tree.forms[2]
+b.follow("Log In")
+form = b.forms[2]
 form.fields['unickname'] = username
 form.fields['upasswd'] = password
 b.submit(form, extra_values={'userlogin': 'Log in'})
