@@ -10,5 +10,4 @@ form = b.forms[2]
 form.fields['unickname'] = username
 form.fields['upasswd'] = password
 b.submit(form, extra_values={'userlogin': 'Log in'})
-print b.contents
-assert username in b.contents
+assert "~" + username in b.contents
